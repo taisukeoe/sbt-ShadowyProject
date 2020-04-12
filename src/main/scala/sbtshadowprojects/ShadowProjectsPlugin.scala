@@ -1,34 +1,39 @@
 package sbtshadowprojects
 
-import sbt._
 import sbt.Keys._
+import sbt._
 
 object ShadowProjectsPlugin extends AutoPlugin {
 
   object autoImport {
     type SettingTransformer = dev.taisukeoe.SettingTransformer
     val SettingTransformer = dev.taisukeoe.SettingTransformer
-    val PredefTransformer = dev.taisukeoe.PredefTransformer
 
-    implicit def prj2shadow(proj: Project): ShadowProject = new ShadowProject(proj, SettingTransformer.Empty)
+    import SettingTransformer._
+
+    implicit class ToShadowProject(proj: Project) {
+      def modify(trans: SettingTransformer): ShadowProject =
+        new ShadowProject(proj, RemoveTarget && trans)
+    }
 
     class ShadowProject(project: Project, mod: SettingTransformer) {
-      def modify(trans: SettingTransformer => SettingTransformer): ShadowProject = new ShadowProject(project, trans(mod))
-
-      def shadow(shadoweeProj: Project): Project =
+      def shadow(shadoweeProj: Project): Project = {
         project
           .settings(
             (shadoweeProj: ProjectDefinition[_]).settings
-              .flatMap(mod.transform(_).newSettings))
+              .flatMap(mod.transform(_).newSettings)
+          )
           .settings(
             for {
               cfg <- Seq(Compile, Test, Runtime)
-              ky <- Seq(
-                sources,
-                resources,
+              targetKey <- Seq(
+                sourceDirectory,
+                resourceDirectory,
+                unmanagedBase
               )
-            } yield cfg / ky := (shadoweeProj / cfg / ky).value
+            } yield cfg / targetKey := (shadoweeProj / cfg / targetKey).value
           )
+      }
     }
   }
 }

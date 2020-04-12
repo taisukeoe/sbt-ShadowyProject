@@ -5,6 +5,8 @@ lazy val checkScalacOptions = taskKey[Unit]("scalacOptions check")
 lazy val mySettingValue = "shadowee"
 lazy val fatalWarnings = "-Xfatal-warnings"
 
+import SettingTransformer._
+
 lazy val shadowee = (project in file("shadowee"))
   .settings(
     version := "0.1",
@@ -15,7 +17,7 @@ lazy val shadowee = (project in file("shadowee"))
   )
 
 lazy val shadower = (project in file("shadower"))
-  .modify(_ || SettingTransformer.ExcludeConfigScoped(Set(Runtime)) || PredefTransformer.RemoveXFatalWarnings)
+  .modify(ExcludeConfigScoped(Set(Runtime)) || RemoveXFatalWarnings)
   .shadow(shadowee)
   .settings(
     checkMySetting := {
