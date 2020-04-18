@@ -29,6 +29,16 @@ object ShadowProjectsPlugin extends AutoPlugin {
         trans: SettingTransformer,
         settingOverrides: Seq[Setting[_]]
     ) {
+      // This is for advanced.
+      def modifyMap(transform: Setting[_] => Seq[Setting[_]]): ShadowyProject =
+        new ShadowyProject(
+          proj.settings((shadowee: ProjectDefinition[_]).settings.flatMap(transform)),
+          shadowee,
+          SettingTransformer.RemoveAll,
+          settingOverrides
+        )
+
+      // This is for most of use-cases.
       def modify(newTrans: SettingTransformer): ShadowyProject =
         new ShadowyProject(proj, shadowee, trans + newTrans, settingOverrides)
 

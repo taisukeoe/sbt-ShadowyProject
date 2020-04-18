@@ -37,8 +37,15 @@ object SettingTransformer {
   }
 
   /*
-   * Besides of a shadowee key and value, this intends to add the same key with a modified value.
-   * Note: `added` must be a sequential, not a set, since an order in Seq[Setting[_]] matter in sbt.
+   * Besides of a shadowee original key and value, this adds the same key with a modified value.
+   * `added` argument must be a sequential, not a set, since an order in Seq[Setting[_]] matter in sbt.
+   *
+   * In case you want to modify a shadowee setting,
+   *   1.) Just use Removed Result for the shadowee setting and add a new shadower setting separately.
+   *   2.) Use Add Result with `~=` setting operator to modify the original setting.
+   *
+   * NOTE: No algebra to just change a value in a shadowee setting is prepared,
+   * since its proper `+` operator cannot be defined.
    */
   final case class Add(original: Setting[_], added: Seq[Setting[_]]) extends Result {
     override def +(that: Result): Result = that match {
@@ -54,11 +61,6 @@ object SettingTransformer {
 
     override def newSettings: Seq[Setting[_]] = original +: added
   }
-
-  /*
-   * NOTE: No algebra to just change a value in a shadowee setting is required.
-   * Just use Removed for the shadowee setting and add a new shadower setting separately.
-   */
 
   final case class Plus(left: SettingTransformer, right: SettingTransformer)
       extends SettingTransformer {
@@ -115,5 +117,9 @@ object SettingTransformer {
 
   case object Empty extends SettingTransformer {
     override def transform(setting: Setting[_]): Result = NoChange(setting)
+  }
+
+  case object RemoveAll extends SettingTransformer {
+    override def transform(setting: Setting[_]): Result = Removed
   }
 }
