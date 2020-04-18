@@ -25,7 +25,11 @@ lazy val sbtShadowProjects = (project in file("."))
   .settings(Seq(Compile, Test).map(_ / console / scalacOptions -= "-Xlint"))
 
 lazy val shadow = project
-  .shadow(sbtShadowProjects)
+  .shadow(sbtShadowProjects) //dog-fooding!
+  /*
+    Since -Xfatal-warnings prevent RemoveUnused scalafix rule from working,
+    this shadow project is nicer to run scalafix.
+   */
   .modify(RemoveScalacOptions("-Xfatal-warnings", "-Xlint"))
   .light
   .settings(ScalafixSettings.permanent)
