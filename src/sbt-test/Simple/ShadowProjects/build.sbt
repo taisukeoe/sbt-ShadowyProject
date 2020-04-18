@@ -4,6 +4,8 @@ lazy val checkScalacOptions = taskKey[Unit]("scalacOptions check")
 
 lazy val mySettingValue = "shadowee"
 lazy val fatalWarnings = "-Xfatal-warnings"
+lazy val unused = "-Ywarn-unused"
+lazy val deprecation = "-deprecation"
 
 import SettingTransformer._
 
@@ -12,13 +14,14 @@ lazy val shadowee = (project in file("shadowee"))
     version := "0.1",
     scalaVersion := "2.13.1",
     Runtime / mySetting := "shadowee runtime",
+    scalacOptions ++= Seq(unused, deprecation),
     Compile / compile / scalacOptions += fatalWarnings,
     mySetting := mySettingValue
   )
 
 lazy val shadower = project
   .shadow(shadowee)
-  .modify(ExcludeConfigScoped(Set(Runtime)) || RemoveXFatalWarnings)
+  .modify(ExcludeConfigScoped(Set(Runtime)) || RemoveXFatalWarnings || RemoveScalacOptions(unused))
   .light
   .settings(
     checkMySetting := {
@@ -27,7 +30,9 @@ lazy val shadower = project
     },
     checkScalacOptions := {
       val foundValue = (Compile / compile / scalacOptions).value
-      assert(!foundValue.contains(fatalWarnings), s"-Xfatal-warnings should be removed.")
+      assert(foundValue.contains(deprecation), s"$deprecation should keep.")
+      assert(!foundValue.contains(fatalWarnings), s"$fatalWarnings should be removed.")
+      assert(!foundValue.contains(unused), s"$unused should be removed.")
     },
   )
 

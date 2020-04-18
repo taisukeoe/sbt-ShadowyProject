@@ -1,6 +1,6 @@
 package dev.taisukeoe
 
-import sbt._
+import sbt.{Def, _}
 import sbt.Keys.{scalacOptions, target}
 
 sealed trait SettingTransformer {
@@ -24,6 +24,7 @@ object SettingTransformer {
       if (cond) Removed else NoChange(setting)
   }
 
+  //Just remove a shadowee key and value.
   case object Removed extends Result {
     override def ||(that: Result): Result = that match {
       case NoChange(_) => this
@@ -35,19 +36,7 @@ object SettingTransformer {
     override def newSettings: Seq[Def.Setting[_]] = Nil
   }
 
-  final case class Transformed(newSettings: Seq[Def.Setting[_]]) extends Result {
-    override def ||(that: Result): Result = that match {
-      case Transformed(those) => this.copy(newSettings ++ those)
-      case _ => this
-    }
-
-    override def &&(that: Result): Result = that match {
-      case Transformed(those) => this.copy(newSettings.intersect(those))
-      case NoChange(_) => this
-      case Removed => that
-    }
-  }
-
+  //Keep a shadowee key and value
   final case class NoChange(setting: Def.Setting[_]) extends Result {
     override def ||(that: Result): Result = that
 
@@ -55,6 +44,44 @@ object SettingTransformer {
 
     override def newSettings: Seq[Def.Setting[_]] = Seq(setting)
   }
+
+  /*
+   * Besides of a shadowee key and value, this intends to add the same key with a modified value.
+   */
+  final case class Add(original: Def.Setting[_], added: Seq[Def.Setting[_]]) extends Result {
+    override def ||(that: Result): Result = that match {
+      case Add(thatOriginal, thatAdded) =>
+        require(original == thatOriginal, s"Both of Add algebras must have the same original, but $original and $thatOriginal")
+        Add(original, added ++ thatAdded)
+      case _ => this
+    }
+
+    override def &&(that: Result): Result = that match {
+      case Add(thatOriginal, thatAdded) =>
+        require(original == thatOriginal, s"Both of Add algebras must have the same original, but $original and $thatOriginal")
+        Add(original, added ++ thatAdded)
+      case NoChange(_) => this
+      case Removed => that
+    }
+
+    override def newSettings: Seq[Def.Setting[_]] = original +: added
+  }
+
+  //  /*
+//   * Remove a shadowee key and value, and add the same key with a transformed value.
+//   */
+//  final case class Transformed(newSettings: Seq[Def.Setting[_]]) extends Result {
+//    override def ||(that: Result): Result = that match {
+//      case Transformed(those) => this.copy(newSettings ++ those)
+//      case _ => this
+//    }
+//
+//    override def &&(that: Result): Result = that match {
+//      case Transformed(those) => this.copy(newSettings.intersect(those))
+//      case NoChange(_) => this
+//      case Removed => that
+//    }
+//  }
 
   final case class And(left: SettingTransformer, right: SettingTransformer)
       extends SettingTransformer {
@@ -68,16 +95,20 @@ object SettingTransformer {
       left.transform(setting) || right.transform(setting)
   }
 
+  //   Its scope will be kept in Configuration axis and in Task axis.
+  //   Project axis will be overwritten by the shadower project.
   final case class Modify(private val mod: Def.Setting[_] => Result) extends SettingTransformer {
     override def transform(setting: Def.Setting[_]): Result = mod(setting)
   }
 
-  val RemoveXFatalWarnings: Modify = RemoveScalacOptions("-Xfatal-warnings")
+  val RemoveXFatalWarnings: Modify = RemoveScalacOptions("-Xfatal-warnings", "-Werror")
 
-  def RemoveScalacOptions(names: String*): Modify = Modify {
-    case setting if setting.key.key.label == scalacOptions.key.label =>
-      Transformed(Seq(setting, scalacOptions in setting.key.scope --= names))
-    case s => NoChange(s)
+  def RemoveScalacOptions(names: String*): Modify = {
+    Modify {
+      case setting if setting.key.key.label == scalacOptions.key.label =>
+        Add(setting, Seq(scalacOptions in setting.key.scope --= names))
+      case s => NoChange(s)
+    }
   }
 
   val RemoveTarget: ExcludeKeyNames = ExcludeKeyNames(Set(target.key.label))
