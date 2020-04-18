@@ -1,7 +1,7 @@
 package dev.taisukeoe
 
 import sbt.Keys.scalacOptions
-import sbt.{ Def, Task }
+import sbt.{Def, Task}
 
 trait SettingTransformerTestBase {
   import SettingTransformer._

@@ -3,7 +3,10 @@ package dev.taisukeoe
 import org.scalatest.funsuite.AsyncFunSuite
 import org.scalatest.prop.TableDrivenPropertyChecks
 
-class SettingTransformerTest extends AsyncFunSuite with TableDrivenPropertyChecks with SettingTransformerTestBase {
+class SettingTransformerTest
+    extends AsyncFunSuite
+    with TableDrivenPropertyChecks
+    with SettingTransformerTestBase {
   import SettingTransformer._
 
   private val fractions = Table[Result, Result, Result](
@@ -19,7 +22,7 @@ class SettingTransformerTest extends AsyncFunSuite with TableDrivenPropertyCheck
     (Removed, removeWerrorAlg, Removed)
   )
 
-  test("Check Result Sum and Product") {
+  test("Result algebras") {
     forAll(fractions) { (left, right, result) =>
       assert(left + right == result)
     }
