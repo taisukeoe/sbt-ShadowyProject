@@ -16,9 +16,10 @@ lazy val shadowee = (project in file("shadowee"))
     mySetting := mySettingValue
   )
 
-lazy val shadower = (project in file("shadower"))
-  .modify(ExcludeConfigScoped(Set(Runtime)) || RemoveXFatalWarnings)
+lazy val shadower = project
   .shadow(shadowee)
+  .modify(ExcludeConfigScoped(Set(Runtime)) || RemoveXFatalWarnings)
+  .light
   .settings(
     checkMySetting := {
       val foundValue = (Runtime / mySetting).value
