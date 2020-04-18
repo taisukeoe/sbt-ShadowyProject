@@ -2,6 +2,7 @@ import SettingTransformer._
 
 lazy val sbtShadowProjects = (project in file("."))
   .enablePlugins(SbtPlugin)
+  .disablePlugins(ScalafixPlugin)
   .settings(
     name := "sbt-shadowprojects",
     organization := "dev.taisukeoe",
@@ -24,6 +25,7 @@ lazy val sbtShadowProjects = (project in file("."))
   .settings(Seq(Compile, Test).map(_ / console / scalacOptions -= "-Xlint"))
 
 lazy val shadow = project
-  .modify(RemoveScalacOptions("-Xfatal-warnings", "-Xlint"))
   .shadow(sbtShadowProjects)
+  .modify(RemoveScalacOptions("-Xfatal-warnings", "-Xlint"))
+  .light
   .settings(ScalafixSettings.permanent)

@@ -76,9 +76,9 @@ object SettingTransformer {
     override def transform(setting: Def.Setting[_]): Result = mod(setting)
   }
 
-  val RemoveXFatalWarnings = RemoveScalacOptions("-Xfatal-warnings")
+  val RemoveXFatalWarnings: Modify = RemoveScalacOptions("-Xfatal-warnings")
 
-  def RemoveScalacOptions(names: String*) = Modify {
+  def RemoveScalacOptions(names: String*): Modify = Modify {
     case setting if setting.key.key.label == scalacOptions.key.label =>
       Transformed(
         Seq(setting, scalacOptions in setting.key.scope --= names)
@@ -86,7 +86,7 @@ object SettingTransformer {
     case s => NoChange(s)
   }
 
-  val RemoveTarget = ExcludeKeyNames(Set(target.key.label))
+  val RemoveTarget: ExcludeKeyNames = ExcludeKeyNames(Set(target.key.label))
 
   final case class ExcludeKeyNames(names: Set[String])
       extends SettingTransformer {
