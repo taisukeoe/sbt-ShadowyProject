@@ -16,15 +16,10 @@ object ShadowProjectsPlugin extends AutoPlugin {
 
     implicit class ToShadowyProject(proj: Project) {
       def shadow(shadowee: Project): ShadowyProject =
-        new ShadowyProject(proj, shadowee, RemoveTarget, Seq.empty)
-          .shadowSettings(
-            Seq(Compile, Test, Runtime),
-            Seq(
-              sourceDirectory,
-              resourceDirectory,
-              unmanagedBase
-            )
-          )
+        new ShadowyProject(proj, shadowee, RemoveTarget, Seq.empty).shadowSettings(
+          Seq(Compile, Test, Runtime),
+          Seq(sourceDirectory, resourceDirectory, unmanagedBase)
+        )
     }
 
     class ShadowyProject(
@@ -43,17 +38,9 @@ object ShadowProjectsPlugin extends AutoPlugin {
         val newOverrides = for {
           axis <- axes
           targetKey <- keys
-        } yield targetKey.in(axis.asScope) := targetKey
-          .in(axis.asScope)
-          .in(shadowee)
-          .value
+        } yield targetKey.in(axis.asScope) := targetKey.in(axis.asScope).in(shadowee).value
 
-        new ShadowyProject(
-          proj,
-          shadowee,
-          trans,
-          settingOverrides ++ newOverrides
-        )
+        new ShadowyProject(proj, shadowee, trans, settingOverrides ++ newOverrides)
       }
 
       def shadowTasks[Axis: ScopeSelectable, T](
@@ -63,17 +50,9 @@ object ShadowProjectsPlugin extends AutoPlugin {
         val newOverrides = for {
           axis <- axes
           targetKey <- keys
-        } yield targetKey.in(axis.asScope) := targetKey
-          .in(axis.asScope)
-          .in(shadowee)
-          .value
+        } yield targetKey.in(axis.asScope) := targetKey.in(axis.asScope).in(shadowee).value
 
-        new ShadowyProject(
-          proj,
-          shadowee,
-          trans,
-          settingOverrides ++ newOverrides
-        )
+        new ShadowyProject(proj, shadowee, trans, settingOverrides ++ newOverrides)
       }
 
       def shadowInputs[Axis: ScopeSelectable, T](
@@ -83,24 +62,17 @@ object ShadowProjectsPlugin extends AutoPlugin {
         val newOverrides = for {
           axis <- axes
           targetKey <- keys
-        } yield targetKey.in(axis.asScope) := targetKey
-          .in(axis.asScope)
-          .in(shadowee)
-          .evaluated
+        } yield targetKey.in(axis.asScope) := targetKey.in(axis.asScope).in(shadowee).evaluated
 
-        new ShadowyProject(
-          proj,
-          shadowee,
-          trans,
-          settingOverrides ++ newOverrides
-        )
+        new ShadowyProject(proj, shadowee, trans, settingOverrides ++ newOverrides)
       }
 
       def light: Project =
-        proj.settings(
-          (shadowee: ProjectDefinition[_]).settings
-            .flatMap(trans.transform(_).newSettings)
-        ).settings(settingOverrides)
+        proj
+          .settings(
+            (shadowee: ProjectDefinition[_]).settings.flatMap(trans.transform(_).newSettings)
+          )
+          .settings(settingOverrides)
     }
   }
 }

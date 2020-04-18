@@ -1,9 +1,6 @@
 import sbt._
 import sbt.Keys._
-import _root_.scalafix.sbt.ScalafixPlugin.autoImport.{
-  scalafixDependencies,
-  scalafixSemanticdb
-}
+import _root_.scalafix.sbt.ScalafixPlugin.autoImport.{scalafixDependencies, scalafixSemanticdb}
 
 object ScalafixSettings {
   private val unused = "-Ywarn-unused"
