@@ -14,6 +14,10 @@ lazy val sbtShadowProjects = (project in file("."))
       "-Xlint"
     ),
     Compile / compile / scalacOptions += "-Xfatal-warnings",
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "3.1.0" % Test,
+      "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
+    ),
     sbtPlugin := true,
     pluginCrossBuild / sbtVersion := "1.2.8",
     scriptedLaunchOpts := {
