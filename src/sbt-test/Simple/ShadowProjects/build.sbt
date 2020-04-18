@@ -21,7 +21,7 @@ lazy val shadowee = (project in file("shadowee"))
 
 lazy val shadower = project
   .shadow(shadowee)
-  .modify(ExcludeConfigScoped(Set(Runtime)) || RemoveXFatalWarnings || RemoveScalacOptions(unused))
+  .modify(ExcludeConfigScoped(Set(Runtime)) + RemoveXFatalWarnings + RemoveScalacOptions(unused))
   .light
   .settings(
     checkMySetting := {

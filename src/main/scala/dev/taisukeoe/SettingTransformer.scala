@@ -1,104 +1,75 @@
 package dev.taisukeoe
 
-import sbt.{Def, _}
+import sbt._
 import sbt.Keys.{scalacOptions, target}
 
 sealed trait SettingTransformer {
 
-  def transform(setting: Def.Setting[_]): SettingTransformer.Result
+  def transform(setting: Setting[_]): SettingTransformer.Result
 
-  def &&(that: SettingTransformer): SettingTransformer = SettingTransformer.And(this, that)
-
-  def ||(that: SettingTransformer): SettingTransformer = SettingTransformer.Or(this, that)
-
+  def +(that: SettingTransformer): SettingTransformer = SettingTransformer.Plus(this, that)
 }
 
 object SettingTransformer {
   sealed trait Result {
-    def ||(that: Result): Result
-    def &&(that: Result): Result
-    def newSettings: Seq[Def.Setting[_]]
+    def +(that: Result): Result
+    def newSettings: Seq[Setting[_]]
   }
   object Result {
-    def unless(cond: Boolean)(setting: => Def.Setting[_]): Result =
+    def unless(cond: Boolean)(setting: => Setting[_]): Result =
       if (cond) Removed else NoChange(setting)
   }
 
   //Just remove a shadowee key and value.
   case object Removed extends Result {
-    override def ||(that: Result): Result = that match {
-      case NoChange(_) => this
-      case _ => that
-    }
 
-    override def &&(that: Result): Result = this
+    override def +(that: Result): Result = this
 
-    override def newSettings: Seq[Def.Setting[_]] = Nil
+    override def newSettings: Seq[Setting[_]] = Nil
   }
 
   //Keep a shadowee key and value
-  final case class NoChange(setting: Def.Setting[_]) extends Result {
-    override def ||(that: Result): Result = that
+  final case class NoChange(setting: Setting[_]) extends Result {
 
-    override def &&(that: Result): Result = that
+    override def +(that: Result): Result = that
 
-    override def newSettings: Seq[Def.Setting[_]] = Seq(setting)
+    override def newSettings: Seq[Setting[_]] = Seq(setting)
   }
 
   /*
    * Besides of a shadowee key and value, this intends to add the same key with a modified value.
+   * Note: `added` must be a sequential, not a set, since an order in Seq[Setting[_]] matter in sbt.
    */
-  final case class Add(original: Def.Setting[_], added: Seq[Def.Setting[_]]) extends Result {
-    override def ||(that: Result): Result = that match {
+  final case class Add(original: Setting[_], added: Seq[Setting[_]]) extends Result {
+    override def +(that: Result): Result = that match {
       case Add(thatOriginal, thatAdded) =>
-        require(original == thatOriginal, s"Both of Add algebras must have the same original, but $original and $thatOriginal")
-        Add(original, added ++ thatAdded)
-      case _ => this
-    }
-
-    override def &&(that: Result): Result = that match {
-      case Add(thatOriginal, thatAdded) =>
-        require(original == thatOriginal, s"Both of Add algebras must have the same original, but $original and $thatOriginal")
+        require(
+          original == thatOriginal,
+          s"Both of Add algebras must have the same original, but $original and $thatOriginal"
+        )
         Add(original, added ++ thatAdded)
       case NoChange(_) => this
       case Removed => that
     }
 
-    override def newSettings: Seq[Def.Setting[_]] = original +: added
+    override def newSettings: Seq[Setting[_]] = original +: added
   }
 
-  //  /*
-//   * Remove a shadowee key and value, and add the same key with a transformed value.
-//   */
-//  final case class Transformed(newSettings: Seq[Def.Setting[_]]) extends Result {
-//    override def ||(that: Result): Result = that match {
-//      case Transformed(those) => this.copy(newSettings ++ those)
-//      case _ => this
-//    }
-//
-//    override def &&(that: Result): Result = that match {
-//      case Transformed(those) => this.copy(newSettings.intersect(those))
-//      case NoChange(_) => this
-//      case Removed => that
-//    }
-//  }
+  /*
+   * NOTE: No algebra to just change a value in a shadowee setting is required.
+   * Just use Removed for the shadowee setting and add a new shadower setting separately.
+   */
 
-  final case class And(left: SettingTransformer, right: SettingTransformer)
+  final case class Plus(left: SettingTransformer, right: SettingTransformer)
       extends SettingTransformer {
-    override def transform(setting: Def.Setting[_]): Result =
-      left.transform(setting) && right.transform(setting)
-  }
-
-  final case class Or(left: SettingTransformer, right: SettingTransformer)
-      extends SettingTransformer {
-    override def transform(setting: Def.Setting[_]): Result =
-      left.transform(setting) || right.transform(setting)
+    override def transform(setting: Setting[_]): Result =
+      left.transform(setting) + right.transform(setting)
   }
 
   //   Its scope will be kept in Configuration axis and in Task axis.
   //   Project axis will be overwritten by the shadower project.
-  final case class Modify(private val mod: Def.Setting[_] => Result) extends SettingTransformer {
-    override def transform(setting: Def.Setting[_]): Result = mod(setting)
+  final case class Modify(private val mod: Setting[_] => Result) extends SettingTransformer {
+    override def transform(setting: Setting[_]): Result = mod(setting)
   }
 
   val RemoveXFatalWarnings: Modify = RemoveScalacOptions("-Xfatal-warnings", "-Werror")
@@ -114,12 +85,12 @@ object SettingTransformer {
   val RemoveTarget: ExcludeKeyNames = ExcludeKeyNames(Set(target.key.label))
 
   final case class ExcludeKeyNames(names: Set[String]) extends SettingTransformer {
-    override def transform(setting: Def.Setting[_]): Result =
+    override def transform(setting: Setting[_]): Result =
       Result.unless(names(setting.key.key.label))(setting)
   }
 
   final case class ExcludeConfigScoped(configs: Set[ConfigKey]) extends SettingTransformer {
-    override def transform(setting: Def.Setting[_]): Result =
+    override def transform(setting: Setting[_]): Result =
       setting.key match {
         case Def.ScopedKey(Scope(_, Select(conf), _, _), _) if configs(conf) => Removed
         case _ => NoChange(setting)
@@ -127,7 +98,7 @@ object SettingTransformer {
   }
 
   final case class ExcludeTaskScoped(keys: Set[AttributeKey[_]]) extends SettingTransformer {
-    override def transform(setting: Def.Setting[_]): Result =
+    override def transform(setting: Setting[_]): Result =
       setting.key match {
         case Def.ScopedKey(Scope(_, _, Select(key), _), _) if keys(key) => Removed
         case _ => NoChange(setting)
@@ -135,21 +106,14 @@ object SettingTransformer {
   }
 
   final case class ExcludeProjectScoped(references: Set[Reference]) extends SettingTransformer {
-    override def transform(setting: Def.Setting[_]): Result =
+    override def transform(setting: Setting[_]): Result =
       setting.key match {
         case Def.ScopedKey(Scope(Select(refs), _, _, _), _) if references(refs) => Removed
         case _ => NoChange(setting)
       }
   }
 
-//  final case class ExcludeScope(references: Set[Reference], keys: Set[AttributeKey[_]], configs: Set[ConfigKey]) extends SettingTransformer {
-//    override def excludes(setting: Def.Setting[_]): Boolean = setting.key match {
-//      case Def.ScopedKey(Scope(Select(refs), _, _, _), _) if references(refs) => true
-//      case _ => false
-//    }
-//  }
-
   case object Empty extends SettingTransformer {
-    override def transform(setting: Def.Setting[_]): Result = NoChange(setting)
+    override def transform(setting: Setting[_]): Result = NoChange(setting)
   }
 }

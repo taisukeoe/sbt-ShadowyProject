@@ -14,8 +14,4 @@ trait SettingTransformerTestBase {
   val removeWerrorAlg: Add = Add(original, Seq(removeWerror))
   val addDeprecationAlg: Add = Add(original, Seq(addDeprecation))
   //scalafix:on DisableSyntax.valInAbstract
-
-  sealed trait Operand
-  case object Sum extends Operand
-  case object Product extends Operand
 }

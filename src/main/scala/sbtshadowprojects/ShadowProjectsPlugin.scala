@@ -22,6 +22,7 @@ object ShadowProjectsPlugin extends AutoPlugin {
         )
     }
 
+    //Use the constructor directly if you want to change above default arguments.
     class ShadowyProject(
         proj: Project,
         shadowee: Project,
@@ -29,7 +30,7 @@ object ShadowProjectsPlugin extends AutoPlugin {
         settingOverrides: Seq[Setting[_]]
     ) {
       def modify(newTrans: SettingTransformer): ShadowyProject =
-        new ShadowyProject(proj, shadowee, trans && newTrans, settingOverrides)
+        new ShadowyProject(proj, shadowee, trans + newTrans, settingOverrides)
 
       def shadowSettings[Axis: ScopeSelectable, T](
           axes: Seq[Axis],
