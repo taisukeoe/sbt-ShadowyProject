@@ -13,26 +13,15 @@ object ShadowProjectsPlugin extends AutoPlugin {
 
     implicit class ToShadowyProject(proj: Project) {
       private val defaultShadowSettingKeys = Seq(sourceDirectory, resourceDirectory, unmanagedBase)
-      def shadow(shadowee: Project): ModifiableShadowyProject =
-        new ModifiableShadowyProject(
-          new ShadowyProject(
-            proj,
-            shadowee,
-            (RemoveTargetDir +: defaultShadowSettingKeys.map(
-              ShadowScopedSettingKey(shadowee, _)
-            )).reduce(_ + _),
-            Seq.empty
-          ).shadowSettingKeys(Seq(Compile, Test), Nil, defaultShadowSettingKeys)
-        )
-    }
-
-    class ModifiableShadowyProject private[sbtshadowprojects] (shadow: ShadowyProject) {
-      import shadow._
-
-      def modify(newTrans: SettingTransformer): ShadowyProject =
-        new ShadowyProject(thisProject, shadowee, trans + newTrans, settingOverrides)
-
-      def light: Project = shadow.light
+      def shadow(shadowee: Project): ShadowyProject =
+        new ShadowyProject(
+          proj,
+          shadowee,
+          (RemoveTargetDir +: defaultShadowSettingKeys.map(
+            ShadowScopedSettingKey(shadowee, _)
+          )).reduce(_ + _),
+          Nil
+        ).shadowSettingKeys(Seq(Compile, Test), Nil, defaultShadowSettingKeys)
     }
 
     //Use the constructor directly if you want to change above default arguments.
@@ -87,6 +76,9 @@ object ShadowProjectsPlugin extends AutoPlugin {
         shadowKeys(configs, tasks, keys)((targetKey, originalScope, shadowScope) =>
           targetKey.in(originalScope) := targetKey.in(shadowScope).evaluated
         )
+
+      def modify(newTrans: SettingTransformer): ShadowyProject =
+        new ShadowyProject(thisProject, shadowee, trans + newTrans, settingOverrides)
 
       def light: Project =
         thisProject
