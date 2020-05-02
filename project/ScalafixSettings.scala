@@ -7,7 +7,11 @@ object ScalafixSettings {
 
   lazy val permanent: Seq[Setting[_]] = Seq(
     scalacOptions ++= Seq(unused, "-Yrangepos"),
-    scalafixDependencies in ThisBuild += "com.github.vovapolu" %% "scaluzzi" % "0.1.4",
-    addCompilerPlugin(scalafixSemanticdb)
+    scalafixDependencies in ThisBuild ++= Seq(
+      "com.github.vovapolu" %% "scaluzzi" % "0.1.4",
+      "com.github.liancheng" %% "organize-imports" % "0.2.1"
+    ),
+    semanticdbEnabled := true,
+    semanticdbVersion := scalafixSemanticdb.revision
   ) ++ Seq(Compile, Test).map(_ / console / scalacOptions -= unused)
 }

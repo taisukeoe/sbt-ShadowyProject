@@ -1,7 +1,8 @@
 package dev.taisukeoe
 
+import sbt.Keys.scalacOptions
+import sbt.Keys.target
 import sbt._
-import sbt.Keys.{scalacOptions, target}
 
 sealed trait SettingTransformer {
 
@@ -48,16 +49,17 @@ object SettingTransformer {
    * since its proper `+` operator cannot be defined.
    */
   final case class Add(original: Setting[_], added: Seq[Setting[_]]) extends Result {
-    override def +(that: Result): Result = that match {
-      case Add(thatOriginal, thatAdded) =>
-        require(
-          original == thatOriginal,
-          s"Both of Add algebras must have the same original, but $original and $thatOriginal"
-        )
-        Add(original, added ++ thatAdded)
-      case NoChange(_) => this
-      case Removed => that
-    }
+    override def +(that: Result): Result =
+      that match {
+        case Add(thatOriginal, thatAdded) =>
+          require(
+            original == thatOriginal,
+            s"Both of Add algebras must have the same original, but $original and $thatOriginal"
+          )
+          Add(original, added ++ thatAdded)
+        case NoChange(_) => this
+        case Removed => that
+      }
 
     override def newSettings: Seq[Setting[_]] = original +: added
   }

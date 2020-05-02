@@ -1,8 +1,9 @@
 package sbtshadowprojects
 
-import dev.taisukeoe.ScopeSelectable
 import sbt.Keys._
 import sbt._
+
+import dev.taisukeoe.ScopeSelectable
 
 object ShadowProjectsPlugin extends AutoPlugin {
 

@@ -12,7 +12,7 @@ import SettingTransformer._
 lazy val shadowee = (project in file("shadowee"))
   .settings(
     version := "0.1",
-    scalaVersion := "2.13.1",
+    scalaVersion := "2.13.2",
     Runtime / mySetting := "shadowee runtime",
     scalacOptions ++= Seq(unused, deprecation),
     Compile / compile / scalacOptions += fatalWarnings,

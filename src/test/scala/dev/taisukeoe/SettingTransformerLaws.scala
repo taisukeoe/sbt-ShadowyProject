@@ -1,7 +1,10 @@
 package dev.taisukeoe
 
-import dev.taisukeoe.SettingTransformer.{Removed, Result}
-import org.scalacheck.{Gen, Prop, Properties}
+import dev.taisukeoe.SettingTransformer.Removed
+import dev.taisukeoe.SettingTransformer.Result
+import org.scalacheck.Gen
+import org.scalacheck.Prop
+import org.scalacheck.Properties
 
 class SettingTransformerLaws
     extends Properties("SettingTransformer laws")
