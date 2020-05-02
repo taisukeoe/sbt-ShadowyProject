@@ -16,12 +16,16 @@ object ShadowProjectsPlugin extends AutoPlugin {
     import dev.taisukeoe.ScopeSelectable.Ops._
 
     implicit class ToShadowyProject(proj: Project) {
+      private val defaultShadowSettingKeys = Seq(sourceDirectory, resourceDirectory, unmanagedBase)
       def shadow(shadowee: Project): ModifiableShadowyProject =
         new ModifiableShadowyProject(
-          new ShadowyProject(proj, shadowee, RemoveTarget, Seq.empty).shadowSettings(
-            Seq(Compile, Test, Runtime),
-            Seq(sourceDirectory, resourceDirectory, unmanagedBase)
-          )
+          new ShadowyProject(
+            proj,
+            shadowee,
+            (RemoveTargetSetting +: defaultShadowSettingKeys.map(ShadowSetting(shadowee, _)))
+              .reduce(_ + _),
+            Seq.empty
+          ).shadowSettings(Seq(Compile, Test), defaultShadowSettingKeys)
         )
     }
 

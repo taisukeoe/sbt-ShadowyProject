@@ -76,9 +76,9 @@ object SettingTransformer {
     override def transform(setting: Setting[_]): Result = mod(setting)
   }
 
-  val RemoveXFatalWarnings: Modify = RemoveScalacOptions("-Xfatal-warnings", "-Werror")
+  val RemoveXFatalWarnings: SettingTransformer = RemoveScalacOptions("-Xfatal-warnings", "-Werror")
 
-  def RemoveScalacOptions(names: String*): Modify = {
+  def RemoveScalacOptions(names: String*): SettingTransformer = {
     Modify {
       case setting if setting.key.key.label == scalacOptions.key.label =>
         Add(setting, Seq(scalacOptions in setting.key.scope --= names))
@@ -86,7 +86,40 @@ object SettingTransformer {
     }
   }
 
-  val RemoveTarget: ExcludeKeyNames = ExcludeKeyNames(Set(target.key.label))
+  def ShadowSetting[T](shadowee: Project, targetKey: SettingKey[T]): SettingTransformer =
+    Modify {
+      case setting if setting.key.key.label == targetKey.key.label =>
+        Add(
+          setting,
+          Seq(targetKey.in(setting.key.scope) := targetKey.in(setting.key.scope).in(shadowee).value)
+        )
+      case s => NoChange(s)
+    }
+
+  def ShadowTask[T](shadowee: Project, targetKey: TaskKey[T]): SettingTransformer =
+    Modify {
+      case setting if setting.key.key.label == targetKey.key.label =>
+        Add(
+          setting,
+          Seq(targetKey.in(setting.key.scope) := targetKey.in(setting.key.scope).in(shadowee).value)
+        )
+      case s => NoChange(s)
+    }
+
+  def ShadowInput[T](shadowee: Project, targetKey: InputKey[T]): SettingTransformer =
+    Modify {
+      case setting if setting.key.key.label == targetKey.key.label =>
+        Add(
+          setting,
+          Seq(
+            targetKey
+              .in(setting.key.scope) := targetKey.in(setting.key.scope).in(shadowee).evaluated
+          )
+        )
+      case s => NoChange(s)
+    }
+
+  val RemoveTargetSetting: SettingTransformer = ExcludeKeyNames(Set(target.key.label))
 
   final case class ExcludeKeyNames(names: Set[String]) extends SettingTransformer {
     override def transform(setting: Setting[_]): Result =
