@@ -3,8 +3,6 @@ package sbtshadowprojects
 import sbt.Keys._
 import sbt._
 
-import dev.taisukeoe.ScopeSelectable
-
 object ShadowProjectsPlugin extends AutoPlugin {
 
   object autoImport {
@@ -12,8 +10,6 @@ object ShadowProjectsPlugin extends AutoPlugin {
     val SettingTransformer = dev.taisukeoe.SettingTransformer
 
     import SettingTransformer._
-
-    import dev.taisukeoe.ScopeSelectable.Ops._
 
     implicit class ToShadowyProject(proj: Project) {
       private val defaultShadowSettingKeys = Seq(sourceDirectory, resourceDirectory, unmanagedBase)
@@ -26,22 +22,13 @@ object ShadowProjectsPlugin extends AutoPlugin {
               ShadowScopedSettingKey(shadowee, _)
             )).reduce(_ + _),
             Seq.empty
-          ).shadowSettingKeys(Seq(Compile, Test), defaultShadowSettingKeys)
+          ).shadowSettingKeys(Seq(Compile, Test), Nil, defaultShadowSettingKeys)
         )
     }
 
     class ModifiableShadowyProject private[sbtshadowprojects] (shadow: ShadowyProject) {
       import shadow._
-      // This is for advanced.
-      def modifyMap(transform: Setting[_] => Seq[Setting[_]]): ShadowyProject =
-        new ShadowyProject(
-          thisProject.settings((shadowee: ProjectDefinition[_]).settings.flatMap(transform)),
-          shadowee,
-          SettingTransformer.RemoveAll,
-          settingOverrides
-        )
 
-      // This is for most of use-cases.
       def modify(newTrans: SettingTransformer): ShadowyProject =
         new ShadowyProject(thisProject, shadowee, trans + newTrans, settingOverrides)
 
@@ -55,56 +42,51 @@ object ShadowProjectsPlugin extends AutoPlugin {
         val trans: SettingTransformer,
         val settingOverrides: Seq[Setting[_]]
     ) {
-      def shadowSettingKeys[Axis: ScopeSelectable, T](
-          axes: Seq[Axis],
+      private def shadowKeys[KeyType](
+          configs: Seq[ConfigKey],
+          tasks: Seq[AttributeKey[_]],
+          keys: Seq[KeyType]
+      )(settingExp: (KeyType, Scope, Scope) => Setting[_]): ShadowyProject = {
+        val newOverrides = for {
+          c <- if (configs.nonEmpty) configs.map(Select(_)) else Seq(This)
+          t <- if (tasks.nonEmpty) tasks.map(Select(_)) else Seq(This)
+          targetKey <- keys
+        } yield settingExp(targetKey, Scope(This, c, t, This), Scope(Select(shadowee), c, t, This))
+
+        new ShadowyProject(
+          thisProject,
+          shadowee,
+          trans,
+          settingOverrides ++ newOverrides
+        )
+      }
+
+      def shadowSettingKeys[T](
+          configs: Seq[ConfigKey],
+          tasks: Seq[AttributeKey[_]],
           keys: Seq[SettingKey[T]]
-      ): ShadowyProject = {
-        val newOverrides = for {
-          axis <- axes
-          targetKey <- keys
-        } yield targetKey.in(axis.asScope) := targetKey.in(axis.asScope).in(shadowee).value
-
-        new ShadowyProject(
-          thisProject,
-          shadowee,
-          trans,
-          settingOverrides ++ newOverrides
+      ): ShadowyProject =
+        shadowKeys(configs, tasks, keys)((targetKey, originalScope, shadowScope) =>
+          targetKey.in(originalScope) := targetKey.in(shadowScope).value
         )
-      }
 
-      def shadowTaskKeys[Axis: ScopeSelectable, T](
-          axes: Seq[Axis],
+      def shadowTaskKeys[T](
+          configs: Seq[ConfigKey],
+          tasks: Seq[AttributeKey[_]],
           keys: Seq[TaskKey[T]]
-      ): ShadowyProject = {
-        val newOverrides = for {
-          axis <- axes
-          targetKey <- keys
-        } yield targetKey.in(axis.asScope) := targetKey.in(axis.asScope).in(shadowee).value
-
-        new ShadowyProject(
-          thisProject,
-          shadowee,
-          trans,
-          settingOverrides ++ newOverrides
+      ): ShadowyProject =
+        shadowKeys(configs, tasks, keys)((targetKey, originalScope, shadowScope) =>
+          targetKey.in(originalScope) := targetKey.in(shadowScope).value
         )
-      }
 
-      def shadowInputKeys[Axis: ScopeSelectable, T](
-          axes: Seq[Axis],
+      def shadowInputKeys[T](
+          configs: Seq[ConfigKey],
+          tasks: Seq[AttributeKey[_]],
           keys: Seq[InputKey[T]]
-      ): ShadowyProject = {
-        val newOverrides = for {
-          axis <- axes
-          targetKey <- keys
-        } yield targetKey.in(axis.asScope) := targetKey.in(axis.asScope).in(shadowee).evaluated
-
-        new ShadowyProject(
-          thisProject,
-          shadowee,
-          trans,
-          settingOverrides ++ newOverrides
+      ): ShadowyProject =
+        shadowKeys(configs, tasks, keys)((targetKey, originalScope, shadowScope) =>
+          targetKey.in(originalScope) := targetKey.in(shadowScope).evaluated
         )
-      }
 
       def light: Project =
         thisProject
