@@ -16,20 +16,17 @@ object ShadowProjectsPlugin extends AutoPlugin {
     import dev.taisukeoe.ScopeSelectable.Ops._
 
     implicit class ToShadowyProject(proj: Project) {
-      def shadow(shadowee: Project): ShadowyProject =
-        new ShadowyProject(proj, shadowee, RemoveTarget, Seq.empty).shadowSettings(
-          Seq(Compile, Test, Runtime),
-          Seq(sourceDirectory, resourceDirectory, unmanagedBase)
+      def shadow(shadowee: Project): ModifiableShadowyProject =
+        new ModifiableShadowyProject(
+          new ShadowyProject(proj, shadowee, RemoveTarget, Seq.empty).shadowSettings(
+            Seq(Compile, Test, Runtime),
+            Seq(sourceDirectory, resourceDirectory, unmanagedBase)
+          )
         )
     }
 
-    //Use the constructor directly if you want to change above default arguments.
-    class ShadowyProject(
-        proj: Project,
-        shadowee: Project,
-        trans: SettingTransformer,
-        settingOverrides: Seq[Setting[_]]
-    ) {
+    class ModifiableShadowyProject private[sbtshadowprojects] (shadow: ShadowyProject) {
+      import shadow._
       // This is for advanced.
       def modifyMap(transform: Setting[_] => Seq[Setting[_]]): ShadowyProject =
         new ShadowyProject(
@@ -43,6 +40,16 @@ object ShadowProjectsPlugin extends AutoPlugin {
       def modify(newTrans: SettingTransformer): ShadowyProject =
         new ShadowyProject(proj, shadowee, trans + newTrans, settingOverrides)
 
+      def light: Project = shadow.light
+    }
+
+    //Use the constructor directly if you want to change above default arguments.
+    class ShadowyProject(
+        val proj: Project,
+        val shadowee: Project,
+        val trans: SettingTransformer,
+        val settingOverrides: Seq[Setting[_]]
+    ) {
       def shadowSettings[Axis: ScopeSelectable, T](
           axes: Seq[Axis],
           keys: Seq[SettingKey[T]]
