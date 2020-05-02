@@ -28,10 +28,10 @@ object ShadowProjectsPlugin extends AutoPlugin {
 
     //Use the constructor directly if you want to change above default arguments.
     class ShadowyProject(
-        val thisProject: Project,
-        val shadowee: Project,
-        val trans: SettingTransformer,
-        val settingOverrides: Seq[Setting[_]]
+        thisProject: Project,
+        shadowee: Project,
+        trans: SettingTransformer,
+        settingOverrides: Seq[Setting[_]]
     ) {
       private def shadowKeys[KeyType](
           configs: Seq[ConfigKey],

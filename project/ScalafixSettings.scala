@@ -6,7 +6,7 @@ object ScalafixSettings {
   private val unused = "-Ywarn-unused"
 
   lazy val permanent: Seq[Setting[_]] = Seq(
-    scalacOptions ++= Seq(unused, "-Yrangepos"),
+    scalacOptions += unused,
     scalafixDependencies in ThisBuild ++= Seq(
       "com.github.vovapolu" %% "scaluzzi" % "0.1.4",
       "com.github.liancheng" %% "organize-imports" % "0.2.1"
