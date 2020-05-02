@@ -1,13 +1,15 @@
-package sbtshadowprojects
+package sbtshadowyproject
 
 import sbt.Keys._
 import sbt._
 
+import com.taisukeoe
+
 object ShadowProjectsPlugin extends AutoPlugin {
 
   object autoImport {
-    type SettingTransformer = dev.taisukeoe.SettingTransformer
-    val SettingTransformer = dev.taisukeoe.SettingTransformer
+    type SettingTransformer = taisukeoe.SettingTransformer
+    val SettingTransformer = taisukeoe.SettingTransformer
 
     import SettingTransformer._
 

@@ -1,7 +1,7 @@
-package dev.taisukeoe
+package com.taisukeoe
 
-import dev.taisukeoe.SettingTransformer.Removed
-import dev.taisukeoe.SettingTransformer.Result
+import com.taisukeoe.SettingTransformer.Removed
+import com.taisukeoe.SettingTransformer.Result
 import org.scalacheck.Gen
 import org.scalacheck.Prop
 import org.scalacheck.Properties

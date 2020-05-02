@@ -1,4 +1,4 @@
-package dev.taisukeoe
+package com.taisukeoe
 
 import org.scalatest.funsuite.AsyncFunSuite
 import org.scalatest.prop.TableDrivenPropertyChecks

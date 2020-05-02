@@ -1,4 +1,4 @@
-package dev.taisukeoe
+package com.taisukeoe
 
 import sbt.Def
 import sbt.Keys.scalacOptions
