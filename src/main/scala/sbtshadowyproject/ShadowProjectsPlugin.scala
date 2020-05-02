@@ -19,11 +19,26 @@ object ShadowProjectsPlugin extends AutoPlugin {
         new ShadowyProject(
           proj,
           shadowee,
+          /*
+           * Capture shadowee task scoped settings like:
+           *
+           * Compile / SOME_TASK_KEY / sourceDirectory := ???
+           */
           (RemoveTargetDir +: defaultShadowSettingKeys.map(
             ShadowScopedSettingKey(shadowee, _)
           )).reduce(_ + _),
           Nil
         ).shadowSettingKeys(Seq(Compile, Test), Nil, defaultShadowSettingKeys)
+    }
+
+    object ShadowyProject {
+      type Ops = ShadowyProject => ShadowyProject
+      /*
+       * Just a shorthand method to define an ops like:
+       *
+       * lazy val ops = ShadowyProject.ops(_.modify(RemoveXFatalWarnings))
+       */
+      def ops(f: Ops): Ops = f
     }
 
     //Use the constructor directly if you want to change above default arguments.
@@ -88,6 +103,9 @@ object ShadowProjectsPlugin extends AutoPlugin {
             (shadowee: ProjectDefinition[_]).settings.flatMap(trans.transform(_).newSettings)
           )
           .settings(settingOverrides)
+
+      // In case you want to re-apply the same Ops to multiple ShadowyProjects.
+      def flash(ops: ShadowyProject.Ops): Project = ops(this).light
     }
   }
 }
