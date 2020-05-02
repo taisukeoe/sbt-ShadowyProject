@@ -22,10 +22,11 @@ object ShadowProjectsPlugin extends AutoPlugin {
           new ShadowyProject(
             proj,
             shadowee,
-            (RemoveTargetSetting +: defaultShadowSettingKeys.map(ShadowSetting(shadowee, _)))
-              .reduce(_ + _),
+            (RemoveTargetDir +: defaultShadowSettingKeys.map(
+              ShadowScopedSettingKey(shadowee, _)
+            )).reduce(_ + _),
             Seq.empty
-          ).shadowSettings(Seq(Compile, Test), defaultShadowSettingKeys)
+          ).shadowSettingKeys(Seq(Compile, Test), defaultShadowSettingKeys)
         )
     }
 
@@ -34,7 +35,7 @@ object ShadowProjectsPlugin extends AutoPlugin {
       // This is for advanced.
       def modifyMap(transform: Setting[_] => Seq[Setting[_]]): ShadowyProject =
         new ShadowyProject(
-          proj.settings((shadowee: ProjectDefinition[_]).settings.flatMap(transform)),
+          thisProject.settings((shadowee: ProjectDefinition[_]).settings.flatMap(transform)),
           shadowee,
           SettingTransformer.RemoveAll,
           settingOverrides
@@ -42,19 +43,19 @@ object ShadowProjectsPlugin extends AutoPlugin {
 
       // This is for most of use-cases.
       def modify(newTrans: SettingTransformer): ShadowyProject =
-        new ShadowyProject(proj, shadowee, trans + newTrans, settingOverrides)
+        new ShadowyProject(thisProject, shadowee, trans + newTrans, settingOverrides)
 
       def light: Project = shadow.light
     }
 
     //Use the constructor directly if you want to change above default arguments.
     class ShadowyProject(
-        val proj: Project,
+        val thisProject: Project,
         val shadowee: Project,
         val trans: SettingTransformer,
         val settingOverrides: Seq[Setting[_]]
     ) {
-      def shadowSettings[Axis: ScopeSelectable, T](
+      def shadowSettingKeys[Axis: ScopeSelectable, T](
           axes: Seq[Axis],
           keys: Seq[SettingKey[T]]
       ): ShadowyProject = {
@@ -63,10 +64,15 @@ object ShadowProjectsPlugin extends AutoPlugin {
           targetKey <- keys
         } yield targetKey.in(axis.asScope) := targetKey.in(axis.asScope).in(shadowee).value
 
-        new ShadowyProject(proj, shadowee, trans, settingOverrides ++ newOverrides)
+        new ShadowyProject(
+          thisProject,
+          shadowee,
+          trans,
+          settingOverrides ++ newOverrides
+        )
       }
 
-      def shadowTasks[Axis: ScopeSelectable, T](
+      def shadowTaskKeys[Axis: ScopeSelectable, T](
           axes: Seq[Axis],
           keys: Seq[TaskKey[T]]
       ): ShadowyProject = {
@@ -75,10 +81,15 @@ object ShadowProjectsPlugin extends AutoPlugin {
           targetKey <- keys
         } yield targetKey.in(axis.asScope) := targetKey.in(axis.asScope).in(shadowee).value
 
-        new ShadowyProject(proj, shadowee, trans, settingOverrides ++ newOverrides)
+        new ShadowyProject(
+          thisProject,
+          shadowee,
+          trans,
+          settingOverrides ++ newOverrides
+        )
       }
 
-      def shadowInputs[Axis: ScopeSelectable, T](
+      def shadowInputKeys[Axis: ScopeSelectable, T](
           axes: Seq[Axis],
           keys: Seq[InputKey[T]]
       ): ShadowyProject = {
@@ -87,11 +98,16 @@ object ShadowProjectsPlugin extends AutoPlugin {
           targetKey <- keys
         } yield targetKey.in(axis.asScope) := targetKey.in(axis.asScope).in(shadowee).evaluated
 
-        new ShadowyProject(proj, shadowee, trans, settingOverrides ++ newOverrides)
+        new ShadowyProject(
+          thisProject,
+          shadowee,
+          trans,
+          settingOverrides ++ newOverrides
+        )
       }
 
       def light: Project =
-        proj
+        thisProject
           .settings(
             (shadowee: ProjectDefinition[_]).settings.flatMap(trans.transform(_).newSettings)
           )
