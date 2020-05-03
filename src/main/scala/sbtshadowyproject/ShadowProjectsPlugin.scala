@@ -3,7 +3,7 @@ package sbtshadowyproject
 import sbt._
 
 import com.taisukeoe
-import com.taisukeoe.ShadowKeys
+import com.taisukeoe.ProjectConsistency
 
 object ShadowProjectsPlugin extends AutoPlugin {
 
@@ -14,6 +14,7 @@ object ShadowProjectsPlugin extends AutoPlugin {
     import SettingTransformer._
 
     implicit class ToShadowyProject(proj: Project) {
+      import ProjectConsistency._
 
       def shadow(shadowee: Project): ShadowyProject =
         new ShadowyProject(
@@ -26,13 +27,13 @@ object ShadowProjectsPlugin extends AutoPlugin {
            */
           (
             RemoveTargetDir
-              +: (ShadowKeys.DefaultSettingKeys ++ ShadowKeys.SupplementalSettingKeys).map(
+              +: (DefaultSettingKeys ++ SupplementalSettingKeys).map(
                 ShadowScopedSettingKey(shadowee, _)
               )
-              ++: ShadowKeys.SupplementalTaskKeys.map(ShadowScopedTaskKey(shadowee, _))
+              ++: SupplementalTaskKeys.map(ShadowScopedTaskKey(shadowee, _))
           ).reduce(_ + _),
           Nil
-        ).shadowSettingKeys(Seq(Compile, Test), Nil, ShadowKeys.DefaultSettingKeys)
+        ).shadowSettingKeys(Seq(Compile, Test), Nil, DefaultSettingKeys)
     }
 
     object ShadowyProject {
@@ -52,7 +53,7 @@ object ShadowProjectsPlugin extends AutoPlugin {
         trans: SettingTransformer,
         settingOverrides: Seq[Setting[_]]
     ) {
-      private def shadowKeys[KeyType](
+      private def shadowScopedKeys[KeyType](
           configs: Seq[ConfigKey],
           tasks: Seq[AttributeKey[_]],
           keys: Seq[KeyType]
@@ -63,12 +64,7 @@ object ShadowProjectsPlugin extends AutoPlugin {
           targetKey <- keys
         } yield settingExp(targetKey, Scope(This, c, t, This), Scope(Select(shadowee), c, t, This))
 
-        new ShadowyProject(
-          thisProject,
-          shadowee,
-          trans,
-          settingOverrides ++ newOverrides
-        )
+        settings(newOverrides: _*)
       }
 
       def shadowSettingKeys[T](
@@ -76,7 +72,7 @@ object ShadowProjectsPlugin extends AutoPlugin {
           tasks: Seq[AttributeKey[_]],
           keys: Seq[SettingKey[T]]
       ): ShadowyProject =
-        shadowKeys(configs, tasks, keys)((targetKey, originalScope, shadowScope) =>
+        shadowScopedKeys(configs, tasks, keys)((targetKey, originalScope, shadowScope) =>
           targetKey.in(originalScope) := targetKey.in(shadowScope).value
         )
 
@@ -85,7 +81,7 @@ object ShadowProjectsPlugin extends AutoPlugin {
           tasks: Seq[AttributeKey[_]],
           keys: Seq[TaskKey[T]]
       ): ShadowyProject =
-        shadowKeys(configs, tasks, keys)((targetKey, originalScope, shadowScope) =>
+        shadowScopedKeys(configs, tasks, keys)((targetKey, originalScope, shadowScope) =>
           targetKey.in(originalScope) := targetKey.in(shadowScope).value
         )
 
@@ -94,12 +90,15 @@ object ShadowProjectsPlugin extends AutoPlugin {
           tasks: Seq[AttributeKey[_]],
           keys: Seq[InputKey[T]]
       ): ShadowyProject =
-        shadowKeys(configs, tasks, keys)((targetKey, originalScope, shadowScope) =>
+        shadowScopedKeys(configs, tasks, keys)((targetKey, originalScope, shadowScope) =>
           targetKey.in(originalScope) := targetKey.in(shadowScope).evaluated
         )
 
       def modify(newTrans: SettingTransformer): ShadowyProject =
         new ShadowyProject(thisProject, shadowee, trans + newTrans, settingOverrides)
+
+      def settings(set: Setting[_]*): ShadowyProject =
+        new ShadowyProject(thisProject, shadowee, trans, settingOverrides ++ set)
 
       def light: Project =
         thisProject

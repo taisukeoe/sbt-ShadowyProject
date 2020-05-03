@@ -5,7 +5,10 @@ import java.io.File
 import sbt.Keys._
 import sbt._
 
-object ShadowKeys {
+/*
+ * Project sources, resources and unmanaged jars should be consistent between a shadowee and shadowers.
+ */
+object ProjectConsistency {
   val DefaultSettingKeys: Seq[SettingKey[File]] =
     Seq(sourceDirectory, resourceDirectory, unmanagedBase)
 
