@@ -24,7 +24,7 @@ lazy val yourMainProject = (project in file("core"))
 lazy val shadow = project
   .shadow(yourMainProject) // enriched by sbt-shadowyproject
   .modify(/* define how to modify original settings with modification algebras */)
-  .settings(/* add shadwo settings */)
+  .settings(/* add shadowee specific settings */)
   .light // applied all modification and settings to `shadow` sub-project
 ```
 
