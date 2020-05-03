@@ -6,7 +6,7 @@ import sbt.Keys._
 import sbt._
 
 /*
- * Project sources, resources and unmanaged jars should be consistent between a shadowee and shadowers.
+ * Project sources, resources and local jars should be consistent between a shadowee and shadowers.
  */
 object ProjectConsistency {
   val DefaultSettingKeys: Seq[SettingKey[File]] =
