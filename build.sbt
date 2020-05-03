@@ -35,5 +35,5 @@ lazy val shadow = project
     this shadow project is nicer to run scalafix.
    */
   .modify(RemoveScalacOptions("-Xfatal-warnings", "-Xlint"))
+  .settings(ScalafixSettings.permanent: _*)
   .light
-  .settings(ScalafixSettings.permanent)
