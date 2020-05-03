@@ -16,6 +16,7 @@ lazy val shadowee = (project in file("shadowee"))
     Runtime / mySetting := "shadowee runtime",
     scalacOptions ++= Seq(unused, deprecation),
     Compile / compile / scalacOptions += fatalWarnings,
+    Compile / unmanagedSourceDirectories += baseDirectory.value / "raw",
     mySetting := mySettingValue
   )
 

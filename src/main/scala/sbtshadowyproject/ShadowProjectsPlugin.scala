@@ -1,9 +1,9 @@
 package sbtshadowyproject
 
-import sbt.Keys._
 import sbt._
 
 import com.taisukeoe
+import com.taisukeoe.ShadowKeys
 
 object ShadowProjectsPlugin extends AutoPlugin {
 
@@ -14,7 +14,7 @@ object ShadowProjectsPlugin extends AutoPlugin {
     import SettingTransformer._
 
     implicit class ToShadowyProject(proj: Project) {
-      private val defaultShadowSettingKeys = Seq(sourceDirectory, resourceDirectory, unmanagedBase)
+
       def shadow(shadowee: Project): ShadowyProject =
         new ShadowyProject(
           proj,
@@ -22,13 +22,17 @@ object ShadowProjectsPlugin extends AutoPlugin {
           /*
            * Capture shadowee task scoped settings like:
            *
-           * Compile / SOME_TASK_KEY / sourceDirectory := ???
+           * Compile / SOME_TASK_KEY / sourceDirectories += baseDirectory.value / "SOME_DIR"
            */
-          (RemoveTargetDir +: defaultShadowSettingKeys.map(
-            ShadowScopedSettingKey(shadowee, _)
-          )).reduce(_ + _),
+          (
+            RemoveTargetDir
+              +: (ShadowKeys.DefaultSettingKeys ++ ShadowKeys.SupplementalSettingKeys).map(
+                ShadowScopedSettingKey(shadowee, _)
+              )
+              ++: ShadowKeys.SupplementalTaskKeys.map(ShadowScopedTaskKey(shadowee, _))
+          ).reduce(_ + _),
           Nil
-        ).shadowSettingKeys(Seq(Compile, Test), Nil, defaultShadowSettingKeys)
+        ).shadowSettingKeys(Seq(Compile, Test), Nil, ShadowKeys.DefaultSettingKeys)
     }
 
     object ShadowyProject {
