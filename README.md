@@ -30,18 +30,32 @@ lazy val shadow = project
 
 In case you needn't copy nor *modify* original shadowee settings, you can call `project.shade(yourMainProject).light` instead.
 
-NOTE: sbt-ShadowyProject `build.sbt` file is a good sample about how-to-use itself.  
+NOTE: sbt-ShadowyProject `build.sbt` file is a good real world example.
+
+## Shadow or Shade?
+
+There are two kinds of ShadowyProject: Shadow and Shade. Shade is a shorthand version of Shadow.  
+
+Shadow will use the same source, resources, jars *AND* other settings as the original shadowee project.
+
+You can modify these copied settings with *modification algebras*, described below. 
+
+Shade will use the same source, resources and jars as the original shadowee project.
+
+You can manually add *common* settings into Shade project as you do in typical sbt subprojects.
 
 ## Modification Algebras
 
 `SettingTransformer` traits define the ways to modify original settings.
+
+Shadow has a public `modify` method to add a SettingTransformer, while Shade has only a private constructor parameter for it. 
 
 There are pre-defined transformers like:
 
 - `RemoveScalacOptions`
   - `RemoveXFatalWarnings`
 - `ExcludeKeyNames`
-  - `RemoveTargetDir` (applied to all shadower projects at default)
+  - `RemoveTargetDir` (applied to all Shadow projects at default)
 - `ExcludeConfigScoped`
   
-`SettingsTransformer` and its `Result` Algebras have a plus(`+`) operator and satisfy an associative law.
+`SettingsTransformer` and `Action` Algebras have a plus(`+`) operator and satisfy an associative law.
