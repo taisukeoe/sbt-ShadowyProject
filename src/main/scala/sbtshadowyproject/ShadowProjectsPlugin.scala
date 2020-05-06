@@ -4,6 +4,8 @@ import sbt._
 
 import com.taisukeoe
 import com.taisukeoe.ProjectConsistency
+import com.taisukeoe.Shade
+import com.taisukeoe.Shadow
 import com.taisukeoe.ShadowyProject
 
 object ShadowProjectsPlugin extends AutoPlugin {
@@ -14,12 +16,12 @@ object ShadowProjectsPlugin extends AutoPlugin {
 
     import SettingTransformer._
 
-    implicit class ToShadowyProject(proj: Project) {
+    implicit class ToShadowyProject(shadower: Project) {
       import ProjectConsistency._
 
-      def shadow(shadowee: Project): ShadowyProject =
-        new ShadowyProject(
-          proj,
+      def shadow(shadowee: Project): Shadow =
+        new Shadow(
+          shadower,
           shadowee,
           /*
            * Capture shadowee task scoped settings like:
@@ -34,7 +36,38 @@ object ShadowProjectsPlugin extends AutoPlugin {
               ++: SupplementalTaskKeys.map(ShadowScopedTaskKey(shadowee, _))
           ).reduce(_ + _),
           Nil
-        ).shadowSettingKeys(Seq(Compile, Test), Nil, DefaultSettingKeys)
+        ).reflectSettingKeys(Seq(Compile, Test), Nil, DefaultSettingKeys)
+
+      def shade(shadowee: Project): Shade =
+        new Shade(
+          shadower,
+          shadowee,
+          Nil
+        ).reflectSettingKeys(Seq(Compile, Test), Nil, DefaultSettingKeys)
+    }
+
+    implicit class ShadowyOps[Shadowy](shadowy: Shadowy)(implicit EV: ShadowyProject[Shadowy]) {
+      def reflectSettingKeys[T](
+          configs: Seq[ConfigKey],
+          tasks: Seq[AttributeKey[_]],
+          keys: Seq[SettingKey[T]]
+      ): Shadowy = EV.reflectSettingKeys(shadowy, configs, tasks, keys)
+
+      def reflectTaskKeys[T](
+          configs: Seq[ConfigKey],
+          tasks: Seq[AttributeKey[_]],
+          keys: Seq[TaskKey[T]]
+      ): Shadowy = EV.reflectTaskKeys(shadowy, configs, tasks, keys)
+
+      def reflectInputKeys[T](
+          configs: Seq[ConfigKey],
+          tasks: Seq[AttributeKey[_]],
+          keys: Seq[InputKey[T]]
+      ): Shadowy = EV.reflectInputKeys(shadowy, configs, tasks, keys)
+
+      def settings(set: Setting[_]*): Shadowy = EV.settingsFor(shadowy, set)
+
+      def light: Project = EV.light(shadowy)
     }
   }
 }
