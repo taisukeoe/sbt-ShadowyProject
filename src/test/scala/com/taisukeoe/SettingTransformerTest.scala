@@ -9,17 +9,17 @@ class SettingTransformerTest
     with SettingTransformerTestBase {
   import SettingTransformer._
 
-  private val fractions = Table[Result, Result, Result](
+  private val fractions = Table[Action, Action, Action](
     ("left", "right", "Result"),
-    (originalAlg, Removed, Removed),
+    (originalAlg, Remove, Remove),
     (originalAlg, removeWerrorAlg, removeWerrorAlg),
     (originalAlg, originalAlg, originalAlg),
-    (removeWerrorAlg, Removed, Removed),
+    (removeWerrorAlg, Remove, Remove),
     (removeWerrorAlg, originalAlg, removeWerrorAlg),
     (removeWerrorAlg, addDeprecationAlg, Add(original, Seq(removeWerror, addDeprecation))),
-    (Removed, Removed, Removed),
-    (Removed, originalAlg, Removed),
-    (Removed, removeWerrorAlg, Removed)
+    (Remove, Remove, Remove),
+    (Remove, originalAlg, Remove),
+    (Remove, removeWerrorAlg, Remove)
   )
 
   test("Result algebras") {
