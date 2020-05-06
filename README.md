@@ -28,6 +28,8 @@ lazy val shadow = project
   .light // applied all modification and settings to `shadow` sub-project
 ```
 
+In case you needn't copy nor *modify* original shadowee settings, you can call `project.shade(yourMainProject).light` instead.
+
 NOTE: sbt-ShadowyProject `build.sbt` file is a good sample about how-to-use itself.  
 
 ## Modification Algebras
