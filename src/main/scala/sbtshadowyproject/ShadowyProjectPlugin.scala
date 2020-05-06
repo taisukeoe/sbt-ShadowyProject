@@ -8,7 +8,7 @@ import com.taisukeoe.Shade
 import com.taisukeoe.Shadow
 import com.taisukeoe.ShadowyProject
 
-object ShadowProjectsPlugin extends AutoPlugin {
+object ShadowyProjectPlugin extends AutoPlugin {
 
   object autoImport {
     type SettingTransformer = taisukeoe.SettingTransformer
