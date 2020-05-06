@@ -42,6 +42,16 @@ object ShadowProjectsPlugin extends AutoPlugin {
         new Shade(
           shadower,
           shadowee,
+          (
+            /*
+             * Add SettingTransformers only for ProjectConsistency.
+             * No need to add RemoveTargetDir because original settings won't be copied in Shade.
+             */
+            (DefaultSettingKeys ++ SupplementalSettingKeys).map(
+              ShadowScopedSettingKey(shadowee, _)
+            )
+              ++: SupplementalTaskKeys.map(ShadowScopedTaskKey(shadowee, _))
+          ).reduce(_ + _),
           Nil
         ).reflectSettingKeys(Seq(Compile, Test), Nil, DefaultSettingKeys)
     }

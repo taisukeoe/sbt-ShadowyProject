@@ -1,0 +1,1 @@
+trait MyApp extends App

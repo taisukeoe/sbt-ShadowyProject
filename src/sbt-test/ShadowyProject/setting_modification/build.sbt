@@ -20,7 +20,7 @@ lazy val shadowee = (project in file("shadowee"))
     mySetting := mySettingValue
   )
 
-lazy val shadower = project
+lazy val shadowOfShadowee = project
   .shadow(shadowee)
   .modify(ExcludeConfigScoped(Set(Runtime)) + RemoveXFatalWarnings + RemoveScalacOptions(unused))
   .settings(
@@ -37,3 +37,12 @@ lazy val shadower = project
   )
   .light
 
+lazy val shadeOfShadowee = project
+  .shade(shadowee)
+  .settings(
+    checkScalacOptions := {
+      val foundValue = (Compile / compile / scalacOptions).value
+      assert(!foundValue.contains(deprecation), s"$deprecation should not be included.")
+    }
+  )
+  .light
