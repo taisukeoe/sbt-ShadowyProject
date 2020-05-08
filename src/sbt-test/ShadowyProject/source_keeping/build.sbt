@@ -5,10 +5,6 @@ lazy val shadowee = (project in file("shadowee"))
     Compile / unmanagedSourceDirectories += baseDirectory.value / "raw",
   )
 
-lazy val shadowOfShadowee = project
-  .shadow(shadowee)
-  .light
+lazy val shadow = shadowee.autoShadow.light
 
-lazy val shadeOfShadowee = project
-  .shade(shadowee)
-  .light
+lazy val shade = shadowee.autoShade.light

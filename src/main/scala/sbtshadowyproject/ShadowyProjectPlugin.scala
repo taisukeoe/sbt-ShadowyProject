@@ -56,6 +56,21 @@ object ShadowyProjectPlugin extends AutoPlugin {
         ).reflectSettingKeys(Seq(Compile, Test), Nil, DefaultSettingKeys)
     }
 
+    // Please be aware that autoShade and autoShadow can be called once each per a shadowee project, due to Project id collision.
+    implicit class AutoShadowyProject(shadowee: Project) {
+      def autoShade: Shade = {
+        val id = s"shade${shadowee.id.capitalize}"
+        val shadower = Project(id, file(s"shadowy/$id"))
+        shadower.shade(shadowee)
+      }
+
+      def autoShadow: Shadow = {
+        val id = s"shadow${shadowee.id.capitalize}"
+        val shadower = Project(id, file(s"shadowy/$id"))
+        shadower.shadow(shadowee)
+      }
+    }
+
     implicit class ShadowyOps[Shadowy](shadowy: Shadowy)(implicit EV: ShadowyProject[Shadowy]) {
       def reflectSettingKeys[T](
           configs: Seq[ConfigKey],
