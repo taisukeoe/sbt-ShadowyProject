@@ -1,12 +1,16 @@
+ThisBuild / git.baseVersion := "0.1"
+ThisBuild / organization := "com.taisukeoe"
+ThisBuild / description := "Define multiple sbt sub-projects which share sources, resources and jars"
+ThisBuild / licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html"))
+
 import SettingTransformer._
 
 lazy val sbtShadowyProject = (project in file("."))
   .enablePlugins(SbtPlugin)
+  .enablePlugins(GitVersioning)
   .disablePlugins(ScalafixPlugin)
   .settings(
     name := "sbt-shadowyproject",
-    organization := "com.taisukeoe",
-    version := "0.1-SNAPSHOT",
     scalaVersion := "2.12.11",
     scalacOptions ++= Seq(
       "-deprecation",
@@ -20,6 +24,9 @@ lazy val sbtShadowyProject = (project in file("."))
     ),
     sbtPlugin := true,
     pluginCrossBuild / sbtVersion := "1.2.8",
+    publishMavenStyle := false,
+    bintrayRepository := "sbt-ShadowyProject",
+    bintrayOrganization in bintray := None,
     scriptedLaunchOpts := {
       scriptedLaunchOpts.value ++
         Seq("-Xmx1024M", "-Dplugin.version=" + version.value)
