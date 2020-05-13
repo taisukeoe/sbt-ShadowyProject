@@ -16,13 +16,24 @@ object ProjectConsistency {
     scalaSource,
     unmanagedSourceDirectories,
     unmanagedResourceDirectories,
-    javaSource
+    javaSource,
+    sourceDirectories,
+    sourceManaged,
+    sourceGenerators,
+    managedSourceDirectories,
+    resourceManaged,
+    resourceDirectories,
+    resourceGenerators
   )
 
   val SupplementalTaskKeys: Seq[TaskKey[_]] = Seq(
     unmanagedSources,
     unmanagedResources,
     unmanagedJars,
-    unmanagedClasspath
+    unmanagedClasspath,
+    sources,
+    managedSources,
+    managedResources,
+    resources
   )
 }
