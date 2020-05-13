@@ -1,4 +1,5 @@
-object Hello {
+object SourceConsistencyCheck {
+  val js: JavaSource = ???
   val ms: ManagedSources = ???
   val s: Sources = ???
   val sg: SourceGenerators = ???

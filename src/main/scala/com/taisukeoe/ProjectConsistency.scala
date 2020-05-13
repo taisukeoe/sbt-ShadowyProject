@@ -23,7 +23,8 @@ object ProjectConsistency {
     managedSourceDirectories,
     resourceManaged,
     resourceDirectories,
-    resourceGenerators
+    resourceGenerators,
+    managedResourceDirectories
   )
 
   val SupplementalTaskKeys: Seq[TaskKey[_]] = Seq(

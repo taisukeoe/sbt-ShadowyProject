@@ -4,17 +4,26 @@ lazy val shadowee = (project in file("shadowee"))
     scalaVersion := "2.12.11",
     inConfig(Compile)(Seq(
       /*
-       * Following sbt Keys are NOT used by sbt.Keys.sources, so that they are eventually ignored.
+       * Following sbt Keys are NOT used by sources key nor resources key, so that they are eventually ignored.
        *  managedSourceDirectories += baseDirectory.value / "managedSourceDirectories",
        *  sourceDirectories += baseDirectory.value / "sourceDirectories",
        *  sourceManaged := baseDirectory.value / "sourceManaged",
+       *  managedResourceDirectories += baseDirectory.value / "managedResourceDirectories",
+       *  resourceDirectories += baseDirectory.value / "resourceDirectories",
+       *  resourceManaged := baseDirectory.value / "resourceManaged",
        */
-      managedSources += baseDirectory.value / "managedSources" / "s.scala",
+      javaSource := baseDirectory.value / "javaSource",
+      managedResources += baseDirectory.value / "resourceDir" / "managedResources.conf",
+      resources += baseDirectory.value / "resourceDir" / "resources.conf",
+      unmanagedResources += baseDirectory.value / "resourceDir" / "unmanagedResources.conf",
+      resourceGenerators += Def.task((baseDirectory.value / "resourceGenerators").listFiles().toSeq).taskValue,
       scalaSource := baseDirectory.value / "scalaSource",
+      managedSources += baseDirectory.value / "sourceDir" / "managedSources.scala",
+      sources += baseDirectory.value / "sourceDir" / "sources.scala",
+      unmanagedSources += baseDirectory.value / "sourceDir" / "unmanagedSources.scala",
       sourceGenerators += Def.task((baseDirectory.value / "sourceGenerators").listFiles().toSeq).taskValue,
-      sources += baseDirectory.value / "Sources" / "s.scala",
-      unmanagedSourceDirectories += baseDirectory.value / "unmanagedSourceDirectories",
-      unmanagedSources += baseDirectory.value / "unmanagedSources" / "s.scala",
+      unmanagedResourceDirectories += baseDirectory.value / "unmanagedResourceDirectories",
+      unmanagedSourceDirectories += baseDirectory.value / "unmanagedSourceDirectories"
     ))
   )
 
