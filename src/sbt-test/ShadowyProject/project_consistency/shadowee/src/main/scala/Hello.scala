@@ -1,1 +1,0 @@
-object Hello extends MyApp
