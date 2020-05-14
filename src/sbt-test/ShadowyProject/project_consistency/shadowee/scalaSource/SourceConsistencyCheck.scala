@@ -1,8 +1,8 @@
-object SourceConsistencyCheck {
-  val js: JavaSource = ???
-  val ms: ManagedSources = ???
-  val s: Sources = ???
-  val sg: SourceGenerators = ???
-  val us: UnmanagedSources = ???
-  val usd: UnmanagedSourceDirectories = ???
+trait SourceConsistencyCheck {
+  def js: JavaSource
+  def ms: ManagedSources
+  def s: Sources
+  def sg: SourceGenerators
+  def us: UnmanagedSources
+  def usd: UnmanagedSourceDirectories
 }

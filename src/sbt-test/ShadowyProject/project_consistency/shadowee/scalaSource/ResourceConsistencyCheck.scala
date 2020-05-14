@@ -3,6 +3,7 @@ object ResourceConsistencyCheck {
     Seq("resourceGenerators.conf",
       "managedResources.conf",
       "resources.conf",
+      "resourceDirectory.conf",
       "unmanagedResources.conf",
       "unmanagedResourceDirectories.conf"
     ).foreach(conf =>
