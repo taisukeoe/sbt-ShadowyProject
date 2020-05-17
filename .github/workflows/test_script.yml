@@ -1,0 +1,28 @@
+name: scripted_test
+
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up JDK 1.8
+        uses: olafurpg/setup-scala@v7
+        with:
+          java-version: adopt@1.8
+      - name: Cache SBT ivy cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-sbt-ivy-cache-${{ hashFiles('**/build.sbt') }}
+      - name: Cache SBT
+        uses: actions/cache@v1
+        with:
+          path: ~/.sbt
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+      - name: Run scripted tests on Scala 2.12
+        run: sbt ++2.12.11 checkAll
+      - name: Run scripted tests on Scala 2.10
+        run: sbt ++2.10.7 checkFmtTests
