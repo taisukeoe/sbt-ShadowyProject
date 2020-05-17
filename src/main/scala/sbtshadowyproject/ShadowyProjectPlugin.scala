@@ -3,10 +3,10 @@ package sbtshadowyproject
 import sbt._
 
 import com.taisukeoe
-import com.taisukeoe.ProjectConsistency
 import com.taisukeoe.Shade
 import com.taisukeoe.Shadow
 import com.taisukeoe.ShadowyProject
+import com.taisukeoe.{ProjectConsistency => PC}
 
 object ShadowyProjectPlugin extends AutoPlugin {
 
@@ -17,7 +17,6 @@ object ShadowyProjectPlugin extends AutoPlugin {
     import SettingTransformer._
 
     implicit class ToShadowyProject(shadower: Project) {
-      import ProjectConsistency._
 
       def shadow(shadowee: Project): Shadow =
         new Shadow(
@@ -30,30 +29,26 @@ object ShadowyProjectPlugin extends AutoPlugin {
            */
           (
             RemoveTargetDir
-              +: (DefaultSettingKeys ++ SupplementalSettingKeys).map(
-                ShadowScopedSettingKey(shadowee, _)
-              )
-              ++: SupplementalTaskKeys.map(ShadowScopedTaskKey(shadowee, _))
+              +: PC.SettingKeys.map(ShadowScopedSettingKey(shadowee, _))
+              ++: PC.TaskKeys.map(ShadowScopedTaskKey(shadowee, _))
           ).reduce(_ + _),
           Nil
-        ).reflectSettingKeys(Seq(Compile, Test), Nil, DefaultSettingKeys)
+        ).keepConsistencyAt(PC.Configs: _*)
 
       def shade(shadowee: Project): Shade =
         new Shade(
           shadower,
           shadowee,
+          /*
+           * Add SettingTransformers only for ProjectConsistency.
+           * No need to add RemoveTargetDir becauqse original settings won't be copied in Shade.
+           */
           (
-            /*
-             * Add SettingTransformers only for ProjectConsistency.
-             * No need to add RemoveTargetDir because original settings won't be copied in Shade.
-             */
-            (DefaultSettingKeys ++ SupplementalSettingKeys).map(
-              ShadowScopedSettingKey(shadowee, _)
-            )
-              ++: SupplementalTaskKeys.map(ShadowScopedTaskKey(shadowee, _))
+            PC.SettingKeys.map(ShadowScopedSettingKey(shadowee, _))
+              ++: PC.TaskKeys.map(ShadowScopedTaskKey(shadowee, _))
           ).reduce(_ + _),
           Nil
-        ).reflectSettingKeys(Seq(Compile, Test), Nil, DefaultSettingKeys)
+        ).keepConsistencyAt(PC.Configs: _*)
     }
 
     // Please be aware that autoShade and autoShadow can be called once each per a shadowee project, due to Project id collision.
@@ -72,6 +67,13 @@ object ShadowyProjectPlugin extends AutoPlugin {
     }
 
     implicit class ShadowyOps[Shadowy](shadowy: Shadowy)(implicit EV: ShadowyProject[Shadowy]) {
+      def keepConsistencyAt(configs: ConfigKey*): Shadowy =
+        EV.reflectSettingKeys(shadowy, configs, Nil, PC.SettingKeysForDir)
+          .reflectSettingKeys(configs, Nil, PC.SettingKeysForFiles)
+          .reflectSettingKeys(configs, Nil, PC.SettingKeysForGenerators)
+          .reflectTaskKeys(configs, Nil, PC.TaskKeysForClasspath)
+          .reflectTaskKeys(configs, Nil, PC.TaskKeysForFiles)
+
       def reflectSettingKeys[T](
           configs: Seq[ConfigKey],
           tasks: Seq[AttributeKey[_]],
