@@ -1,7 +1,11 @@
+def scala212 = "2.12.11"
+def scala210 = "2.10.7"
+
 ThisBuild / git.baseVersion := "0.1"
 ThisBuild / organization := "com.taisukeoe"
 ThisBuild / description := "Define multiple sbt sub-projects which share sources, resources and jars"
 ThisBuild / licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html"))
+ThisBuild / scalaVersion := scala212
 
 import SettingTransformer._
 
@@ -11,7 +15,6 @@ lazy val sbtShadowyProject = (project in file("."))
   .disablePlugins(ScalafixPlugin)
   .settings(
     name := "sbt-shadowyproject",
-    scalaVersion := "2.12.11",
     scalacOptions ++= Seq(
       "-deprecation",
       "-feature",
@@ -23,7 +26,13 @@ lazy val sbtShadowyProject = (project in file("."))
       "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
     ),
     sbtPlugin := true,
-    pluginCrossBuild / sbtVersion := "1.2.8",
+    crossScalaVersions := Seq(scala212, scala210),
+    sbtVersion in pluginCrossBuild := {
+      scalaBinaryVersion.value match {
+        case "2.10" => "0.13.17"
+        case "2.12" => "1.2.1"
+      }
+    },
     publishMavenStyle := false,
     bintrayRepository := "sbt-ShadowyProject",
     bintrayOrganization in bintray := None,
