@@ -42,7 +42,7 @@ lazy val shadowee = (project in file("shadowee"))
         externalDependencyClasspath,
         dependencyClasspath).map(
           key =>
-            key += Attributed.blank(baseDirectory.value / "jars" / s"${key.key.label.capitalize}.jar"),
+            key += Attributed.blank(baseDirectory.value / "jars" / s"${key.key.label.capitalize}.jar")
       ))
   )
 

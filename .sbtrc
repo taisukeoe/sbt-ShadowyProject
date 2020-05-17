@@ -1,1 +1,2 @@
 alias checkAll=;scalafmtCheckAll;scalafmtSbtCheck;shadow/scalafix --check;shadow/Test/scalafix --check;test;scripted
+alias checkFmtTests=;scalafmtCheckAll;scalafmtSbtCheck;test;scripted

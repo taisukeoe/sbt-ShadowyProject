@@ -9,6 +9,9 @@ ThisBuild / scalaVersion := scala212
 
 import SettingTransformer._
 
+def ifScala212[T](binVersion: String)(ifTrue: T)(ifFalse: T): T =
+  if (binVersion == "2.12") ifTrue else ifFalse
+
 lazy val sbtShadowyProject = (project in file("."))
   .enablePlugins(SbtPlugin)
   .enablePlugins(GitVersioning)
@@ -21,18 +24,16 @@ lazy val sbtShadowyProject = (project in file("."))
       "-Xlint"
     ),
     Compile / compile / scalacOptions += "-Xfatal-warnings",
+    scalacOptions ++=
+      ifScala212(scalaBinaryVersion.value)(List.empty[String])(List("-language:existentials")),
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.1.0" % Test,
       "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
     ),
     sbtPlugin := true,
     crossScalaVersions := Seq(scala212, scala210),
-    sbtVersion in pluginCrossBuild := {
-      scalaBinaryVersion.value match {
-        case "2.10" => "0.13.17"
-        case "2.12" => "1.2.1"
-      }
-    },
+    sbtVersion in pluginCrossBuild :=
+      ifScala212(scalaBinaryVersion.value)("1.2.1")("0.13.17"),
     publishMavenStyle := false,
     bintrayRepository := "sbt-ShadowyProject",
     bintrayOrganization in bintray := None,
@@ -47,9 +48,13 @@ lazy val sbtShadowyProject = (project in file("."))
 lazy val shadow = project
   .shadow(sbtShadowyProject) //dog-fooding!
   /*
-    Since -Xfatal-warnings prevent RemoveUnused scalafix rule from working,
-    this shadow project is nicer to run scalafix.
+   * Since Scalafix won't work well with `-Xfatal-warnings` or Scala 2.10,
+   * this shadow project is nicer to run scalafix.
    */
-  .modify(RemoveScalacOptions("-Xfatal-warnings", "-Xlint"))
+  .modify(
+    RemoveScalacOptions("-Xfatal-warnings", "-Xlint") + ExcludeKeyNames(
+      Set(crossScalaVersions.key.label)
+    )
+  )
   .settings(ScalafixSettings.permanent: _*)
   .light

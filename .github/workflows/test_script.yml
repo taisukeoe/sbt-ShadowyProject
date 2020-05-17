@@ -25,4 +25,4 @@ jobs:
       - name: Run scripted tests on Scala 2.12
         run: sbt ++2.12.11 checkAll
       - name: Run scripted tests on Scala 2.10
-        run: sbt ++2.10.7 checkAll
+        run: sbt ++2.10.7 checkFmtTests
