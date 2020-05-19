@@ -33,7 +33,7 @@ lazy val sbtShadowyProject = (project in file("."))
     sbtPlugin := true,
     crossScalaVersions := Seq(scala212, scala210),
     sbtVersion in pluginCrossBuild :=
-      ifScala212(scalaBinaryVersion.value)("1.2.1")("0.13.17"),
+      ifScala212(scalaBinaryVersion.value)("1.2.8")("0.13.17"),
     publishMavenStyle := false,
     bintrayRepository := "sbt-ShadowyProject",
     bintrayOrganization in bintray := None,
