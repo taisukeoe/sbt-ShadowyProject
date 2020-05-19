@@ -2,6 +2,7 @@ package com.taisukeoe
 
 import sbt.Project
 import sbt.ProjectDefinition
+import sbt.ProjectReference
 import sbt.Setting
 
 //Use the constructor directly if you want to change above default arguments.
@@ -45,5 +46,7 @@ object Shadow {
             .flatMap(shadowy.trans.transform(_).newSettings)
         )
         .settings(shadowy.settingOverrides)
+        .dependsOn(shadowy.original.dependencies: _*)
+        .aggregate((shadowy.original.aggregate: Seq[ProjectReference]): _*)
   }
 }

@@ -2,6 +2,7 @@ package com.taisukeoe
 
 import sbt.Project
 import sbt.ProjectDefinition
+import sbt.ProjectReference
 import sbt.Setting
 
 import com.taisukeoe.SettingTransformer.Keep
@@ -34,5 +35,7 @@ object Shade {
             .flatMap(_.newSettings)
         }
         .settings(shadowy.settingOverrides)
+        .dependsOn(shadowy.original.dependencies: _*)
+        .aggregate((shadowy.original.aggregate: Seq[ProjectReference]): _*)
   }
 }
