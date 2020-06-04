@@ -44,6 +44,14 @@ Shade will use the same source, resources and jars as the original shadowee proj
 
 You can manually add *common* settings into Shade project as you do in typical sbt subprojects.
 
+## Assumptions
+ShadowyProject assumes original project settings:
+
+- don't have files to be added to sources or resources TaskKeys directly.
+- don't have files for its generators, managed sources or resources which are not located under sourceManaged or resourceManaged directories. 
+
+Otherwise, ShadowyProject cannot refer them automatically and requires to add them to ShadowyProject settings explicitly.
+
 ## Modification Algebras
 
 `SettingTransformer` traits define the ways to modify original settings.
