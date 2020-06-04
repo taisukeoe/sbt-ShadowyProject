@@ -1,8 +1,8 @@
 object ResourceConsistencyCheck {
   def main(args: Array[String]): Unit = {
-    Seq("resourceGenerators.conf",
+    Seq(
+      "resourceGenerators/resourceGenerators.conf",
       "managedResources.conf",
-      "resources.conf",
       "resourceDirectory.conf",
       "unmanagedResources.conf",
       "unmanagedResourceDirectories.conf"

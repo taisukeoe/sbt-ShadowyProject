@@ -11,7 +11,13 @@ import sbt._
 object ProjectConsistency {
   val Configs: Seq[ConfigKey] = Seq(Compile, Test)
 
-  val SettingKeysForDir: Seq[SettingKey[File]] =
+  val SettingKeysForManagedDir: Seq[SettingKey[File]] =
+    Seq(
+      sourceManaged,
+      resourceManaged
+    )
+
+  val SettingKeysForUnmanagedDir: Seq[SettingKey[File]] =
     Seq(
       sourceDirectory,
       resourceDirectory,
@@ -22,11 +28,15 @@ object ProjectConsistency {
       resourceManaged
     )
 
-  val SettingKeysForFiles: Seq[SettingKey[Seq[File]]] =
+  val SettingKeysForUnmanagedFiles: Seq[SettingKey[Seq[File]]] =
     Seq(
       unmanagedSourceDirectories,
+      unmanagedResourceDirectories
+    )
+
+  val SettingKeysForManagedFiles: Seq[SettingKey[Seq[File]]] =
+    Seq(
       managedSourceDirectories,
-      unmanagedResourceDirectories,
       managedResourceDirectories,
       sourceDirectories,
       resourceDirectories
@@ -37,12 +47,20 @@ object ProjectConsistency {
     resourceGenerators
   )
 
-  val TaskKeysForFiles: Seq[TaskKey[Seq[File]]] =
+  val TaskKeysForUnmanagedFiles: Seq[TaskKey[Seq[File]]] =
     Seq(
       unmanagedSources,
-      unmanagedResources,
+      unmanagedResources
+    )
+
+  val TaskKeysForManagedFiles: Seq[TaskKey[Seq[File]]] =
+    Seq(
       managedSources,
-      managedResources,
+      managedResources
+    )
+
+  val TaskKeysForAggregatedFiles: Seq[TaskKey[Seq[File]]] =
+    Seq(
       sources,
       resources
     )
@@ -56,8 +74,9 @@ object ProjectConsistency {
     dependencyClasspath
   )
 
-  val SettingKeys: Seq[SettingKey[_]] =
-    SettingKeysForDir ++ SettingKeysForFiles ++ SettingKeysForGenerators
+  val AllSettingKeys: Seq[SettingKey[_]] =
+    SettingKeysForUnmanagedDir ++ SettingKeysForUnmanagedFiles ++ SettingKeysForManagedDir ++ SettingKeysForManagedFiles ++ SettingKeysForGenerators
 
-  val TaskKeys: Seq[TaskKey[_]] = TaskKeysForFiles ++ TaskKeysForClasspath
+  val AllTaskKeys: Seq[TaskKey[_]] =
+    TaskKeysForUnmanagedFiles ++ TaskKeysForClasspath ++ TaskKeysForManagedFiles ++ TaskKeysForAggregatedFiles
 }

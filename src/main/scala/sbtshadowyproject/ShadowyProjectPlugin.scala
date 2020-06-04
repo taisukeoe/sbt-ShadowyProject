@@ -1,5 +1,9 @@
 package sbtshadowyproject
 
+import java.nio.file.Files
+
+import scala.collection.JavaConverters._
+
 import sbt._
 
 import com.taisukeoe
@@ -23,15 +27,13 @@ object ShadowyProjectPlugin extends AutoPlugin {
           shadower,
           shadowee,
           /*
-           * Capture shadowee task scoped settings like:
+           * Copying sources, resources or jars related keys may lead to NullPointerException and should be avoided.
+           * In case a shadowee project has `Configuration / Task / unmanagedSources` kind of settings,
            *
-           * Compile / SOME_TASK_KEY / sourceDirectories += baseDirectory.value / "SOME_DIR"
            */
-          (
-            RemoveTargetDir
-              +: PC.SettingKeys.map(ShadowScopedSettingKey(shadowee, _))
-              ++: PC.TaskKeys.map(ShadowScopedTaskKey(shadowee, _))
-          ).reduce(_ + _),
+          RemoveTargetDir
+            + ExcludeKeyNames(PC.AllSettingKeys.map(_.key.label).toSet)
+            + ExcludeKeyNames(PC.AllTaskKeys.map(_.key.label).toSet),
           Nil
         ).keepConsistencyAt(PC.Configs: _*)
 
@@ -39,14 +41,6 @@ object ShadowyProjectPlugin extends AutoPlugin {
         new Shade(
           shadower,
           shadowee,
-          /*
-           * Add SettingTransformers only for ProjectConsistency.
-           * No need to add RemoveTargetDir becauqse original settings won't be copied in Shade.
-           */
-          (
-            PC.SettingKeys.map(ShadowScopedSettingKey(shadowee, _))
-              ++: PC.TaskKeys.map(ShadowScopedTaskKey(shadowee, _))
-          ).reduce(_ + _),
           Nil
         ).keepConsistencyAt(PC.Configs: _*)
     }
@@ -67,12 +61,28 @@ object ShadowyProjectPlugin extends AutoPlugin {
     }
 
     implicit class ShadowyOps[Shadowy](shadowy: Shadowy)(implicit EV: ShadowyProject[Shadowy]) {
-      def keepConsistencyAt(configs: ConfigKey*): Shadowy =
-        EV.reflectSettingKeys(shadowy, configs, Nil, PC.SettingKeysForDir)
-          .reflectSettingKeys(configs, Nil, PC.SettingKeysForFiles)
-          .reflectSettingKeys(configs, Nil, PC.SettingKeysForGenerators)
+      def keepConsistencyAt(configs: ConfigKey*): Shadowy = {
+        /*
+         * Since resourceGenerators in sbt plugin project lead to compile,
+         * resourceGenerators and managedResources in original project scope must be independent from shadowy projects.
+         *
+         * Instead, all files under sourceManaged or resourceManaged directories are captured to shadowy managedSources or managedResources respectively.
+         */
+        val managedSettings = for {
+          c <- if (configs.nonEmpty) configs.map(Select(_)) else Seq(This)
+          (targetFilesKey, targetDirKey) <-
+            PC.TaskKeysForManagedFiles.zip(PC.SettingKeysForManagedDir)
+        } yield targetFilesKey.in(Scope(This, c, Zero, Zero)) ++=
+          Seq(targetDirKey.in(Scope(Select(EV.originalOf(shadowy)), c, Zero, Zero)).value)
+            .filter(_.exists)
+            .flatMap(f => Files.walk(f.toPath).iterator().asScala.map(_.toFile).filter(_.isFile))
+
+        EV.reflectSettingKeys(shadowy, configs, Nil, PC.SettingKeysForUnmanagedDir)
+          .reflectSettingKeys(configs, Nil, PC.SettingKeysForUnmanagedFiles)
           .reflectTaskKeys(configs, Nil, PC.TaskKeysForClasspath)
-          .reflectTaskKeys(configs, Nil, PC.TaskKeysForFiles)
+          .reflectTaskKeys(configs, Nil, PC.TaskKeysForUnmanagedFiles)
+          .settings(managedSettings: _*)
+      }
 
       def reflectSettingKeys[T](
           configs: Seq[ConfigKey],
