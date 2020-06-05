@@ -23,23 +23,25 @@ object ProjectConsistency {
       resourceDirectory,
       unmanagedBase,
       scalaSource,
-      javaSource,
-      sourceManaged,
-      resourceManaged
+      javaSource
     )
 
-  val SettingKeysForUnmanagedFiles: Seq[SettingKey[Seq[File]]] =
+  val SettingKeysForUnmanagedDirs: Seq[SettingKey[Seq[File]]] =
     Seq(
       unmanagedSourceDirectories,
       unmanagedResourceDirectories
     )
 
-  val SettingKeysForManagedFiles: Seq[SettingKey[Seq[File]]] =
+  val SettingKeysForDirs: Seq[SettingKey[Seq[File]]] =
     Seq(
-      managedSourceDirectories,
-      managedResourceDirectories,
       sourceDirectories,
       resourceDirectories
+    )
+
+  val SettingKeysForManagedDirs: Seq[SettingKey[Seq[File]]] =
+    Seq(
+      managedSourceDirectories,
+      managedResourceDirectories
     )
 
   val SettingKeysForGenerators: Seq[SettingKey[Seq[Task[Seq[File]]]]] = Seq(
@@ -75,7 +77,7 @@ object ProjectConsistency {
   )
 
   val AllSettingKeys: Seq[SettingKey[_]] =
-    SettingKeysForUnmanagedDir ++ SettingKeysForUnmanagedFiles ++ SettingKeysForManagedDir ++ SettingKeysForManagedFiles ++ SettingKeysForGenerators
+    SettingKeysForUnmanagedDir ++ SettingKeysForUnmanagedDirs ++ SettingKeysForManagedDir ++ SettingKeysForManagedDirs ++ SettingKeysForDirs ++ SettingKeysForGenerators
 
   val AllTaskKeys: Seq[TaskKey[_]] =
     TaskKeysForUnmanagedFiles ++ TaskKeysForClasspath ++ TaskKeysForManagedFiles ++ TaskKeysForAggregatedFiles

@@ -68,20 +68,27 @@ object ShadowyProjectPlugin extends AutoPlugin {
          *
          * Instead, all files under sourceManaged or resourceManaged directories are captured to shadowy managedSources or managedResources respectively.
          */
-        val managedSettings = for {
+        val managedSettings: Seq[Seq[Setting[_]]] = for {
           c <- if (configs.nonEmpty) configs.map(Select(_)) else Seq(This)
-          (targetFilesKey, targetDirKey) <-
-            PC.TaskKeysForManagedFiles.zip(PC.SettingKeysForManagedDir)
-        } yield targetFilesKey.in(Scope(This, c, Zero, Zero)) ++=
-          Seq(targetDirKey.in(Scope(Select(EV.originalOf(shadowy)), c, Zero, Zero)).value)
-            .filter(_.exists)
-            .flatMap(f => Files.walk(f.toPath).iterator().asScala.map(_.toFile).filter(_.isFile))
+          (targetFilesKey, targetDirsKey, targetDirKey) <- (
+              PC.TaskKeysForManagedFiles,
+              PC.SettingKeysForManagedDirs,
+              PC.SettingKeysForManagedDir
+          ).zipped
+        } yield Seq(
+          targetDirsKey.in(Scope(This, c, Zero, Zero)) +=
+            targetDirKey.in(Scope(Select(EV.originalOf(shadowy)), c, Zero, Zero)).value,
+          targetFilesKey.in(Scope(This, c, Zero, Zero)) ++=
+            Seq(targetDirKey.in(Scope(Select(EV.originalOf(shadowy)), c, Zero, Zero)).value)
+              .filter(_.exists)
+              .flatMap(f => Files.walk(f.toPath).iterator().asScala.map(_.toFile).filter(_.isFile))
+        )
 
         EV.reflectSettingKeys(shadowy, configs, Nil, PC.SettingKeysForUnmanagedDir)
-          .reflectSettingKeys(configs, Nil, PC.SettingKeysForUnmanagedFiles)
+          .reflectSettingKeys(configs, Nil, PC.SettingKeysForUnmanagedDirs)
           .reflectTaskKeys(configs, Nil, PC.TaskKeysForClasspath)
           .reflectTaskKeys(configs, Nil, PC.TaskKeysForUnmanagedFiles)
-          .settings(managedSettings: _*)
+          .settings(managedSettings.flatten: _*)
       }
 
       def reflectSettingKeys[T](
