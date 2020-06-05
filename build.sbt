@@ -21,7 +21,21 @@ lazy val sbtShadowyProject = (project in file("."))
     scalacOptions ++= Seq(
       "-deprecation",
       "-feature",
-      "-Xlint"
+      "-Xlint:adapted-args",
+      "-Xlint:nullary-unit",
+      "-Xlint:inaccessible",
+      "-Xlint:nullary-override",
+      "-Xlint:infer-any",
+      "-Xlint:missing-interpolator",
+      "-Xlint:doc-detached",
+      "-Xlint:private-shadow",
+      "-Xlint:type-parameter-shadow",
+      "-Xlint:poly-implicit-overload",
+      "-Xlint:option-implicit",
+      "-Xlint:delayedinit-select",
+      "-Xlint:package-object-classes",
+      "-Xlint:stars-align",
+      "-Xlint:constant"
     ),
     Compile / compile / scalacOptions += "-Xfatal-warnings",
     scalacOptions ++=
@@ -52,7 +66,7 @@ lazy val shadow = project
    * this shadow project is nicer to run scalafix.
    */
   .modify(
-    RemoveScalacOptions("-Xfatal-warnings", "-Xlint") + ExcludeKeyNames(
+    RemoveXFatalWarnings + ExcludeKeyNames(
       Set(crossScalaVersions.key.label)
     )
   )

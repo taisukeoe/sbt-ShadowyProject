@@ -1,18 +1,30 @@
 # sbt-ShadowyProject
 
-`sbt-ShadowyProject` is a sbt-plugin to define multiple sbt sub-projects which share sources, resources and jars. 
+`sbt-ShadowyProject` is a sbt-plugin to define an additional project which refers to another (original) project sources, resources and jars. 
 
-You can copy(`shadow`) your sub-project(`shadowee`) into a different one(`shadower`), with modifying original settings.
+You can copy(`shadow`) your original sub-project(`shadowee`) into a different one(`shadower`), with modifying original settings.
 
-This aims to split mandatory-for-build sbt settings and useful-for-maintenance ones which may have compilation overheads into each sbt sub-project.
+## Background
+This aims to split sbt settings for **slightly** different purposes, even for the same sources.
+Combination is up to you - mandatory-for-build and useful-for-maintainance, safer-coding ando flexible(,but not so safe)-coding, or strict-scalacOptions and loose-scalacOptions-with-Scalafix.
+ 
+While there are tons of scalac-options which allow us to pursue safer coding, some of them might be too strict.
 
-## How to use:
+For example, `-Xfatal-warnings` (or `-Werror` in Scala 2.13 or above) scalac option is widely used to escalate warnings to errors.
 
-Since `sbt-ShadowyProject` is not published yet, please `git clone`, `sbt publishLocal` and add following settings. 
+It works great in situations when you want to confirm if current code is clean, such as CI. 
+
+On the other hand, marking every unused import as an error every time seems to be a bit strict. 
+
+Refactoring often introduces unused imports or variables, which don't have to be fixed immediately. Rather, it would be much easier to run Scalafix RemoveUnused rule, just before you commit your changes.
+
+If that's a case, you can set `-Xfatal-warnings` to your original sub-project(shadowee), and set Scalafix configuration without `-Xfatal-warnings` to your shadower project. 
+
+## How to use: 
 
 ```
 // project/plugins.sbt
-addSbtPlugin("com.taisukeoe" % "sbt-shadowyproject" % "0.1-SNAPSHOT")
+addSbtPlugin("com.taisukeoe" % "sbt-shadowyproject" % "0.1.0-RC1")
 ```
 
 ```
