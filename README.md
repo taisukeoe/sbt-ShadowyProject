@@ -1,3 +1,5 @@
+[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/taisukeoe/sbt-ShadowyProject)
+
 # sbt-ShadowyProject
 
 `sbt-ShadowyProject` is a sbt-plugin to define an additional project which refers to another (original) project sources, resources and jars. 
