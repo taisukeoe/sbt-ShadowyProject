@@ -70,25 +70,37 @@ object ShadowyProjectPlugin extends AutoPlugin {
          */
         val managedSettings: Seq[Seq[Setting[_]]] = for {
           c <- if (configs.nonEmpty) configs.map(Select(_)) else Seq(This)
-          (targetFilesKey, targetDirsKey, targetDirKey) <- (
+          (
+            managedSourcesOrResources,
+            managedSourceOrResourceDirectories,
+            sourceOrResourceManaged
+          ) <- (
               PC.TaskKeysForManagedFiles,
               PC.SettingKeysForManagedDirs,
               PC.SettingKeysForManagedDir
           ).zipped
         } yield Seq(
-          targetDirsKey.in(Scope(This, c, Zero, Zero)) +=
-            targetDirKey.in(Scope(Select(EV.originalOf(shadowy)), c, Zero, Zero)).value,
-          targetFilesKey.in(Scope(This, c, Zero, Zero)) ++=
-            Seq(targetDirKey.in(Scope(Select(EV.originalOf(shadowy)), c, Zero, Zero)).value)
-              .filter(_.exists)
+          managedSourceOrResourceDirectories.in(Scope(This, c, Zero, Zero)) +=
+            sourceOrResourceManaged.in(Scope(Select(EV.originalOf(shadowy)), c, Zero, Zero)).value,
+          managedSourcesOrResources.in(Scope(This, c, Zero, Zero)) ++=
+            Seq(
+              sourceOrResourceManaged.in(Scope(Select(EV.originalOf(shadowy)), c, Zero, Zero)).value
+            ).filter(_.exists)
               .flatMap(f => Files.walk(f.toPath).iterator().asScala.map(_.toFile).filter(_.isFile))
         )
+
+        // sbt-plugin projects have resource generators, which may cause resource files duplication in ShadowyProject.
+        val emptyGenerators: Seq[Setting[_]] = for {
+          c <- if (configs.nonEmpty) configs.map(Select(_)) else Seq(This)
+          sourceOrResourceGenerators <- PC.SettingKeysForGenerators
+        } yield sourceOrResourceGenerators.in(Scope(This, c, Zero, Zero)) := Nil
 
         EV.reflectSettingKeys(shadowy, configs, Nil, PC.SettingKeysForUnmanagedDir)
           .reflectSettingKeys(configs, Nil, PC.SettingKeysForUnmanagedDirs)
           .reflectTaskKeys(configs, Nil, PC.TaskKeysForClasspath)
           .reflectTaskKeys(configs, Nil, PC.TaskKeysForUnmanagedFiles)
           .settings(managedSettings.flatten: _*)
+          .settings(emptyGenerators: _*)
       }
 
       def reflectSettingKeys[T](
