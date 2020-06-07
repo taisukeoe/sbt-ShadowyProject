@@ -35,14 +35,14 @@ object ShadowyProjectPlugin extends AutoPlugin {
             + ExcludeKeyNames(PC.AllSettingKeys.map(_.key.label).toSet)
             + ExcludeKeyNames(PC.AllTaskKeys.map(_.key.label).toSet),
           Nil
-        ).keepConsistencyAt(PC.Configs: _*)
+        ).isConsistentAt(PC.Configs, Nil)
 
       def shade(shadowee: Project): Shade =
         new Shade(
           shadower,
           shadowee,
           Nil
-        ).keepConsistencyAt(PC.Configs: _*)
+        ).isConsistentAt(PC.Configs, Nil)
     }
 
     // Please be aware that autoShade and autoShadow can be called once each per a shadowee project, due to Project id collision.
@@ -61,15 +61,23 @@ object ShadowyProjectPlugin extends AutoPlugin {
     }
 
     implicit class ShadowyOps[Shadowy](shadowy: Shadowy)(implicit EV: ShadowyProject[Shadowy]) {
-      def keepConsistencyAt(configs: ConfigKey*): Shadowy = {
+      def isConsistentAt(configs: ConfigKey*): Shadowy = isConsistentAt(configs, Nil)
+
+      def isConsistentAt(configs: Seq[ConfigKey], tasks: Seq[AttributeKey[_]]): Shadowy = {
         /*
          * Since resourceGenerators in sbt plugin project lead to compile,
          * resourceGenerators and managedResources in original project scope must be independent from shadowy projects.
          *
          * Instead, all files under sourceManaged or resourceManaged directories are captured to shadowy managedSources or managedResources respectively.
          */
+        val configTaskMatrix: Seq[(ScopeAxis[ConfigKey], ScopeAxis[AttributeKey[_]])] =
+          for {
+            cfg <- if (configs.nonEmpty) configs.map(Select(_)) else Seq(This)
+            tsk <- if (tasks.nonEmpty) tasks.map(Select(_)) else Seq(Zero)
+          } yield (cfg, tsk)
+
         val managedSettings: Seq[Seq[Setting[_]]] = for {
-          c <- if (configs.nonEmpty) configs.map(Select(_)) else Seq(This)
+          (cfg, tsk) <- configTaskMatrix
           (
             managedSourcesOrResources,
             managedSourceOrResourceDirectories,
@@ -80,11 +88,13 @@ object ShadowyProjectPlugin extends AutoPlugin {
               PC.SettingKeysForManagedDir
           ).zipped
         } yield Seq(
-          managedSourceOrResourceDirectories.in(Scope(This, c, Zero, Zero)) +=
-            sourceOrResourceManaged.in(Scope(Select(EV.originalOf(shadowy)), c, Zero, Zero)).value,
-          managedSourcesOrResources.in(Scope(This, c, Zero, Zero)) ++= {
+          managedSourceOrResourceDirectories.in(Scope(This, cfg, tsk, Zero)) +=
+            sourceOrResourceManaged.in(Scope(Select(EV.originalOf(shadowy)), cfg, tsk, Zero)).value,
+          managedSourcesOrResources.in(Scope(This, cfg, tsk, Zero)) ++= {
             val managedDir =
-              sourceOrResourceManaged.in(Scope(Select(EV.originalOf(shadowy)), c, Zero, Zero)).value
+              sourceOrResourceManaged
+                .in(Scope(Select(EV.originalOf(shadowy)), cfg, tsk, Zero))
+                .value
             if (managedDir.exists)
               for {
                 path <- Files.walk(managedDir.toPath).iterator().asScala.toSeq
@@ -98,14 +108,14 @@ object ShadowyProjectPlugin extends AutoPlugin {
 
         // sbt-plugin projects have resource generators, which may cause resource files duplication in ShadowyProject.
         val emptyGenerators: Seq[Setting[_]] = for {
-          c <- if (configs.nonEmpty) configs.map(Select(_)) else Seq(This)
+          (cfg, tsk) <- configTaskMatrix
           sourceOrResourceGenerators <- PC.SettingKeysForGenerators
-        } yield sourceOrResourceGenerators.in(Scope(This, c, Zero, Zero)) := Nil
+        } yield sourceOrResourceGenerators.in(Scope(This, cfg, tsk, Zero)) := Nil
 
-        EV.reflectSettingKeys(shadowy, configs, Nil, PC.SettingKeysForUnmanagedDir)
-          .reflectSettingKeys(configs, Nil, PC.SettingKeysForUnmanagedDirs)
-          .reflectTaskKeys(configs, Nil, PC.TaskKeysForClasspath)
-          .reflectTaskKeys(configs, Nil, PC.TaskKeysForUnmanagedFiles)
+        EV.reflectSettingKeys(shadowy, configs, tasks, PC.SettingKeysForUnmanagedDir)
+          .reflectSettingKeys(configs, tasks, PC.SettingKeysForUnmanagedDirs)
+          .reflectTaskKeys(configs, tasks, PC.TaskKeysForClasspath)
+          .reflectTaskKeys(configs, tasks, PC.TaskKeysForUnmanagedFiles)
           .settings(managedSettings.flatten: _*)
           .settings(emptyGenerators: _*)
       }
