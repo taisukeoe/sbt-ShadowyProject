@@ -18,28 +18,32 @@ lazy val sbtShadowyProject = (project in file("."))
   .disablePlugins(ScalafixPlugin)
   .settings(
     name := "sbt-shadowyproject",
-    scalacOptions ++= Seq(
-      "-deprecation",
-      "-feature",
-      "-Xlint:adapted-args",
-      "-Xlint:nullary-unit",
-      "-Xlint:inaccessible",
-      "-Xlint:nullary-override",
-      "-Xlint:infer-any",
-      "-Xlint:missing-interpolator",
-      "-Xlint:doc-detached",
-      "-Xlint:private-shadow",
-      "-Xlint:type-parameter-shadow",
-      "-Xlint:poly-implicit-overload",
-      "-Xlint:option-implicit",
-      "-Xlint:delayedinit-select",
-      "-Xlint:package-object-classes",
-      "-Xlint:stars-align",
-      "-Xlint:constant"
+    scalacOptions ++= Seq("-deprecation", "-feature"),
+    scalacOptions ++= ifScala212(scalaBinaryVersion.value)(
+      Seq(
+        "-Xlint:adapted-args",
+        "-Xlint:nullary-unit",
+        "-Xlint:inaccessible",
+        "-Xlint:nullary-override",
+        "-Xlint:infer-any",
+        "-Xlint:missing-interpolator",
+        "-Xlint:doc-detached",
+        "-Xlint:private-shadow",
+        "-Xlint:type-parameter-shadow",
+        "-Xlint:poly-implicit-overload",
+        "-Xlint:option-implicit",
+        "-Xlint:delayedinit-select",
+        "-Xlint:package-object-classes",
+        "-Xlint:stars-align",
+        "-Xlint:constant"
+      )
+    )(
+      Seq(
+        "-Xlint",
+        "-language:existentials"
+      )
     ),
     Compile / compile / scalacOptions += "-Xfatal-warnings",
-    scalacOptions ++=
-      ifScala212(scalaBinaryVersion.value)(List.empty[String])(List("-language:existentials")),
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.1.0" % Test,
       "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
