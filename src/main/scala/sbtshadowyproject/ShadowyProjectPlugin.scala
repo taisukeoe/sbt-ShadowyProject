@@ -82,11 +82,18 @@ object ShadowyProjectPlugin extends AutoPlugin {
         } yield Seq(
           managedSourceOrResourceDirectories.in(Scope(This, c, Zero, Zero)) +=
             sourceOrResourceManaged.in(Scope(Select(EV.originalOf(shadowy)), c, Zero, Zero)).value,
-          managedSourcesOrResources.in(Scope(This, c, Zero, Zero)) ++=
-            Seq(
+          managedSourcesOrResources.in(Scope(This, c, Zero, Zero)) ++= {
+            val managedDir =
               sourceOrResourceManaged.in(Scope(Select(EV.originalOf(shadowy)), c, Zero, Zero)).value
-            ).filter(_.exists)
-              .flatMap(f => Files.walk(f.toPath).iterator().asScala.map(_.toFile).filter(_.isFile))
+            if (managedDir.exists)
+              for {
+                path <- Files.walk(managedDir.toPath).iterator().asScala.toSeq
+                file = path.toFile
+                if file.isFile
+              } yield file
+            else
+              Nil
+          }
         )
 
         // sbt-plugin projects have resource generators, which may cause resource files duplication in ShadowyProject.
