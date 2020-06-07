@@ -7,21 +7,21 @@ lazy val shadowee = (project in file("shadowee"))
        * Following sbt Keys are NOT used by sources key nor resources key, so that they are eventually ignored.
        *  managedSourceDirectories += baseDirectory.value / "managedSourceDirectories",
        *  sourceDirectories += baseDirectory.value / "sourceDirectories",
-       *  sourceManaged := baseDirectory.value / "sourceManaged",
        *  managedResourceDirectories += baseDirectory.value / "managedResourceDirectories",
        *  resourceDirectories += baseDirectory.value / "resourceDirectories",
-       *  resourceManaged := baseDirectory.value / "resourceManaged",
+       *
+       * sources or resources TaskKey cannot be used directly here due shadowy managedSources or managedResources dependency graph wiring.
        */
       javaSource := baseDirectory.value / "javaSource",
-      managedResources += baseDirectory.value / "resourceDir" / "managedResources.conf",
-      resources += baseDirectory.value / "resourceDir" / "resources.conf",
+      resourceManaged := baseDirectory.value / "resourceManaged",
+      managedResources += resourceManaged.value / "managedResources.conf",
       unmanagedResources += baseDirectory.value / "resourceDir" / "unmanagedResources.conf",
-      resourceGenerators += Def.task((baseDirectory.value / "resourceGenerators").listFiles().toSeq).taskValue,
+      resourceGenerators += Def.task((resourceManaged.value / "resourceGenerators").listFiles().toSeq).taskValue,
       scalaSource := baseDirectory.value / "scalaSource",
-      managedSources += baseDirectory.value / "sourceDir" / "managedSources.scala",
-      sources += baseDirectory.value / "sourceDir" / "sources.scala",
+      sourceManaged := baseDirectory.value / "sourceManaged",
+      managedSources += sourceManaged.value / "managedSources.scala",
       unmanagedSources += baseDirectory.value / "sourceDir" / "unmanagedSources.scala",
-      sourceGenerators += Def.task((baseDirectory.value / "sourceGenerators").listFiles().toSeq).taskValue,
+      sourceGenerators += Def.task((sourceManaged.value / "sourceGenerators").listFiles().toSeq).taskValue,
       unmanagedResourceDirectories += baseDirectory.value / "unmanagedResourceDirectories",
       unmanagedSourceDirectories += baseDirectory.value / "unmanagedSourceDirectories"
     )),

@@ -11,25 +11,37 @@ import sbt._
 object ProjectConsistency {
   val Configs: Seq[ConfigKey] = Seq(Compile, Test)
 
-  val SettingKeysForDir: Seq[SettingKey[File]] =
+  val SettingKeysForManagedDir: Seq[SettingKey[File]] =
+    Seq(
+      sourceManaged,
+      resourceManaged
+    )
+
+  val SettingKeysForUnmanagedDir: Seq[SettingKey[File]] =
     Seq(
       sourceDirectory,
       resourceDirectory,
       unmanagedBase,
       scalaSource,
-      javaSource,
-      sourceManaged,
-      resourceManaged
+      javaSource
     )
 
-  val SettingKeysForFiles: Seq[SettingKey[Seq[File]]] =
+  val SettingKeysForUnmanagedDirs: Seq[SettingKey[Seq[File]]] =
     Seq(
       unmanagedSourceDirectories,
-      managedSourceDirectories,
-      unmanagedResourceDirectories,
-      managedResourceDirectories,
+      unmanagedResourceDirectories
+    )
+
+  val SettingKeysForDirs: Seq[SettingKey[Seq[File]]] =
+    Seq(
       sourceDirectories,
       resourceDirectories
+    )
+
+  val SettingKeysForManagedDirs: Seq[SettingKey[Seq[File]]] =
+    Seq(
+      managedSourceDirectories,
+      managedResourceDirectories
     )
 
   val SettingKeysForGenerators: Seq[SettingKey[Seq[Task[Seq[File]]]]] = Seq(
@@ -37,12 +49,20 @@ object ProjectConsistency {
     resourceGenerators
   )
 
-  val TaskKeysForFiles: Seq[TaskKey[Seq[File]]] =
+  val TaskKeysForUnmanagedFiles: Seq[TaskKey[Seq[File]]] =
     Seq(
       unmanagedSources,
-      unmanagedResources,
+      unmanagedResources
+    )
+
+  val TaskKeysForManagedFiles: Seq[TaskKey[Seq[File]]] =
+    Seq(
       managedSources,
-      managedResources,
+      managedResources
+    )
+
+  val TaskKeysForAggregatedFiles: Seq[TaskKey[Seq[File]]] =
+    Seq(
       sources,
       resources
     )
@@ -56,8 +76,9 @@ object ProjectConsistency {
     dependencyClasspath
   )
 
-  val SettingKeys: Seq[SettingKey[_]] =
-    SettingKeysForDir ++ SettingKeysForFiles ++ SettingKeysForGenerators
+  val AllSettingKeys: Seq[SettingKey[_]] =
+    SettingKeysForUnmanagedDir ++ SettingKeysForUnmanagedDirs ++ SettingKeysForManagedDir ++ SettingKeysForManagedDirs ++ SettingKeysForDirs ++ SettingKeysForGenerators
 
-  val TaskKeys: Seq[TaskKey[_]] = TaskKeysForFiles ++ TaskKeysForClasspath
+  val AllTaskKeys: Seq[TaskKey[_]] =
+    TaskKeysForUnmanagedFiles ++ TaskKeysForClasspath ++ TaskKeysForManagedFiles ++ TaskKeysForAggregatedFiles
 }

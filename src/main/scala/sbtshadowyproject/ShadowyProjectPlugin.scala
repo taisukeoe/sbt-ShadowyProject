@@ -1,5 +1,9 @@
 package sbtshadowyproject
 
+import java.nio.file.Files
+
+import scala.collection.JavaConverters._
+
 import sbt._
 
 import com.taisukeoe
@@ -23,32 +27,22 @@ object ShadowyProjectPlugin extends AutoPlugin {
           shadower,
           shadowee,
           /*
-           * Capture shadowee task scoped settings like:
+           * Copying sources, resources or jars related keys may lead to NullPointerException and should be avoided.
+           * In case a shadowee project has `Configuration / Task / unmanagedSources` kind of settings,
            *
-           * Compile / SOME_TASK_KEY / sourceDirectories += baseDirectory.value / "SOME_DIR"
            */
-          (
-            RemoveTargetDir
-              +: PC.SettingKeys.map(ShadowScopedSettingKey(shadowee, _))
-              ++: PC.TaskKeys.map(ShadowScopedTaskKey(shadowee, _))
-          ).reduce(_ + _),
+          RemoveTargetDir
+            + ExcludeKeyNames(PC.AllSettingKeys.map(_.key.label).toSet)
+            + ExcludeKeyNames(PC.AllTaskKeys.map(_.key.label).toSet),
           Nil
-        ).keepConsistencyAt(PC.Configs: _*)
+        ).isConsistentAt(PC.Configs, Nil)
 
       def shade(shadowee: Project): Shade =
         new Shade(
           shadower,
           shadowee,
-          /*
-           * Add SettingTransformers only for ProjectConsistency.
-           * No need to add RemoveTargetDir becauqse original settings won't be copied in Shade.
-           */
-          (
-            PC.SettingKeys.map(ShadowScopedSettingKey(shadowee, _))
-              ++: PC.TaskKeys.map(ShadowScopedTaskKey(shadowee, _))
-          ).reduce(_ + _),
           Nil
-        ).keepConsistencyAt(PC.Configs: _*)
+        ).isConsistentAt(PC.Configs, Nil)
     }
 
     // Please be aware that autoShade and autoShadow can be called once each per a shadowee project, due to Project id collision.
@@ -67,12 +61,64 @@ object ShadowyProjectPlugin extends AutoPlugin {
     }
 
     implicit class ShadowyOps[Shadowy](shadowy: Shadowy)(implicit EV: ShadowyProject[Shadowy]) {
-      def keepConsistencyAt(configs: ConfigKey*): Shadowy =
-        EV.reflectSettingKeys(shadowy, configs, Nil, PC.SettingKeysForDir)
-          .reflectSettingKeys(configs, Nil, PC.SettingKeysForFiles)
-          .reflectSettingKeys(configs, Nil, PC.SettingKeysForGenerators)
-          .reflectTaskKeys(configs, Nil, PC.TaskKeysForClasspath)
-          .reflectTaskKeys(configs, Nil, PC.TaskKeysForFiles)
+      def isConsistentAt(configs: ConfigKey*): Shadowy = isConsistentAt(configs, Nil)
+
+      def isConsistentAt(configs: Seq[ConfigKey], tasks: Seq[AttributeKey[_]]): Shadowy = {
+        /*
+         * Since resourceGenerators in sbt plugin project lead to compile,
+         * resourceGenerators and managedResources in original project scope must be independent from shadowy projects.
+         *
+         * Instead, all files under sourceManaged or resourceManaged directories are captured to shadowy managedSources or managedResources respectively.
+         */
+        val configTaskMatrix: Seq[(ScopeAxis[ConfigKey], ScopeAxis[AttributeKey[_]])] =
+          for {
+            cfg <- if (configs.nonEmpty) configs.map(Select(_)) else Seq(This)
+            tsk <- if (tasks.nonEmpty) tasks.map(Select(_)) else Seq(Zero)
+          } yield (cfg, tsk)
+
+        val managedSettings: Seq[Seq[Setting[_]]] = for {
+          (cfg, tsk) <- configTaskMatrix
+          (
+            managedSourcesOrResources,
+            managedSourceOrResourceDirectories,
+            sourceOrResourceManaged
+          ) <- (
+              PC.TaskKeysForManagedFiles,
+              PC.SettingKeysForManagedDirs,
+              PC.SettingKeysForManagedDir
+          ).zipped
+        } yield Seq(
+          managedSourceOrResourceDirectories.in(Scope(This, cfg, tsk, Zero)) +=
+            sourceOrResourceManaged.in(Scope(Select(EV.originalOf(shadowy)), cfg, tsk, Zero)).value,
+          managedSourcesOrResources.in(Scope(This, cfg, tsk, Zero)) ++= {
+            val managedDir =
+              sourceOrResourceManaged
+                .in(Scope(Select(EV.originalOf(shadowy)), cfg, tsk, Zero))
+                .value
+            if (managedDir.exists)
+              for {
+                path <- Files.walk(managedDir.toPath).iterator().asScala.toSeq
+                file = path.toFile
+                if file.isFile
+              } yield file
+            else
+              Nil
+          }
+        )
+
+        // sbt-plugin projects have resource generators, which may cause resource files duplication in ShadowyProject.
+        val emptyGenerators: Seq[Setting[_]] = for {
+          (cfg, tsk) <- configTaskMatrix
+          sourceOrResourceGenerators <- PC.SettingKeysForGenerators
+        } yield sourceOrResourceGenerators.in(Scope(This, cfg, tsk, Zero)) := Nil
+
+        EV.reflectSettingKeys(shadowy, configs, tasks, PC.SettingKeysForUnmanagedDir)
+          .reflectSettingKeys(configs, tasks, PC.SettingKeysForUnmanagedDirs)
+          .reflectTaskKeys(configs, tasks, PC.TaskKeysForClasspath)
+          .reflectTaskKeys(configs, tasks, PC.TaskKeysForUnmanagedFiles)
+          .settings(managedSettings.flatten: _*)
+          .settings(emptyGenerators: _*)
+      }
 
       def reflectSettingKeys[T](
           configs: Seq[ConfigKey],

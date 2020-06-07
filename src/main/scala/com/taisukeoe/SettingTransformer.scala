@@ -86,39 +86,6 @@ object SettingTransformer {
     }
   }
 
-  def ShadowScopedSettingKey[T](shadowee: Project, targetKey: SettingKey[T]): SettingTransformer =
-    Modify {
-      case setting if setting.key.key.label == targetKey.key.label =>
-        Add(
-          setting,
-          Seq(targetKey.in(setting.key.scope) := targetKey.in(setting.key.scope).in(shadowee).value)
-        )
-      case s => Keep(s)
-    }
-
-  def ShadowScopedTaskKey[T](shadowee: Project, targetKey: TaskKey[T]): SettingTransformer =
-    Modify {
-      case setting if setting.key.key.label == targetKey.key.label =>
-        Add(
-          setting,
-          Seq(targetKey.in(setting.key.scope) := targetKey.in(setting.key.scope).in(shadowee).value)
-        )
-      case s => Keep(s)
-    }
-
-  def ShadowScopedInputKey[T](shadowee: Project, targetKey: InputKey[T]): SettingTransformer =
-    Modify {
-      case setting if setting.key.key.label == targetKey.key.label =>
-        Add(
-          setting,
-          Seq(
-            targetKey
-              .in(setting.key.scope) := targetKey.in(setting.key.scope).in(shadowee).evaluated
-          )
-        )
-      case s => Keep(s)
-    }
-
   val RemoveTargetDir: SettingTransformer = ExcludeKeyNames(Set(target.key.label))
 
   final case class ExcludeKeyNames(names: Set[String]) extends SettingTransformer {
