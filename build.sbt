@@ -21,6 +21,7 @@ lazy val sbtShadowyProject = (project in file("."))
     scalacOptions ++= Seq("-deprecation", "-feature"),
     scalacOptions ++= ifScala212(scalaBinaryVersion.value)(
       Seq(
+        // Avoid unused warnings flag here, and let them manage by my shadow/scalafix.
         "-Xlint:adapted-args",
         "-Xlint:nullary-unit",
         "-Xlint:inaccessible",
