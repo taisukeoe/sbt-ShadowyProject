@@ -3,10 +3,7 @@ package com.taisukeoe
 import org.scalatest.funsuite.AsyncFunSuite
 import org.scalatest.prop.TableDrivenPropertyChecks
 
-class SettingTransformerTest
-    extends AsyncFunSuite
-    with TableDrivenPropertyChecks
-    with SettingTransformerTestBase {
+class SettingTransformerTest extends AsyncFunSuite with TableDrivenPropertyChecks with SettingTransformerTestBase {
   import SettingTransformer._
 
   private val fractions = Table[Action, Action, Action](
