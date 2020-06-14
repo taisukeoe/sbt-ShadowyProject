@@ -34,17 +34,6 @@ object ShadowyProjectPlugin extends AutoPlugin {
           Nil
         ).isConsistentAt(PC.Configs: _*)
 
-      // Thanks to https://xuwei-k.hatenablog.com/entry/2019/12/18/132158
-      private def projectDependencies(
-          projectRef: ProjectRef,
-          depMap: Map[ProjectRef, Seq[ClasspathDep[ProjectRef]]]
-      ): Seq[ClasspathDep[ProjectRef]] = {
-        def loop(root: ProjectRef): Seq[ClasspathDep[ProjectRef]] = {
-          depMap(root).flatMap(dep => dep +: loop(dep.project))
-        }
-        loop(projectRef).distinct
-      }
-
       def deepShadow(shadowee: Project): Shadow =
         new Shadow(
           shadower,
@@ -54,13 +43,8 @@ object ShadowyProjectPlugin extends AutoPlugin {
             + ExcludeKeyNames(PC.AllTaskKeys.map(_.key.label).toSet),
           Seq(
             sources.in(Compile) ++= sbt.Def.taskDyn {
-              val deps =
-                projectDependencies(thisProjectRef.in(shadowee).value, buildDependencies.in(shadowee).value.classpath)
-              sources.in(Compile).all(ScopeFilter(inProjects(deps.map(_.project): _*))).map(_.flatten)
-            }.value,
-            allDependencies ++= Def.taskDyn {
-              val deps = projectDependencies(thisProjectRef.in(shadowee).value, buildDependencies.value.classpath)
-              libraryDependencies.all(ScopeFilter(inProjects(deps.map(_.project): _*))).map(_.flatten)
+              val deps = buildDependencies.value.classpathTransitiveRefs(thisProjectRef.in(shadowee).value)
+              sources.in(Compile).all(ScopeFilter(inProjects(deps: _*))).map(_.flatten)
             }.value
           )
         ).isConsistentAt(PC.Configs: _*)

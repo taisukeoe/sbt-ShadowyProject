@@ -4,9 +4,9 @@ import java.nio.file.Files
 
 import scala.collection.JavaConverters._
 
-import com.taisukeoe.{ProjectConsistency => PC}
-
 import sbt._
+
+import com.taisukeoe.{ProjectConsistency => PC}
 
 trait ShadowyProject[Shadowy] {
   def originalOf(shadowy: Shadowy): Project
