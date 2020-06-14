@@ -1,2 +1,4 @@
 +>a3/compile
-->shade/compile
++>shadow/compile
+>setFatalUnused
+->shadow/compile

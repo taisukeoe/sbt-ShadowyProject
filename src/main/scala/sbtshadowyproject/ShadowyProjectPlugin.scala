@@ -1,5 +1,6 @@
 package sbtshadowyproject
 
+import sbt.Keys._
 import sbt._
 
 import com.taisukeoe
@@ -31,14 +32,45 @@ object ShadowyProjectPlugin extends AutoPlugin {
             + ExcludeKeyNames(PC.AllSettingKeys.map(_.key.label).toSet)
             + ExcludeKeyNames(PC.AllTaskKeys.map(_.key.label).toSet),
           Nil
-        ).isConsistentAt(PC.Configs, Nil)
+        ).isConsistentAt(PC.Configs: _*)
+
+      // Thanks to https://xuwei-k.hatenablog.com/entry/2019/12/18/132158
+      private def projectDependencies(
+          projectRef: ProjectRef,
+          depMap: Map[ProjectRef, Seq[ClasspathDep[ProjectRef]]]
+      ): Seq[ClasspathDep[ProjectRef]] = {
+        def loop(root: ProjectRef): Seq[ClasspathDep[ProjectRef]] = {
+          depMap(root).flatMap(dep => dep +: loop(dep.project))
+        }
+        loop(projectRef).distinct
+      }
+
+      def deepShadow(shadowee: Project): Shadow =
+        new Shadow(
+          shadower,
+          shadowee,
+          RemoveTargetDir
+            + ExcludeKeyNames(PC.AllSettingKeys.map(_.key.label).toSet)
+            + ExcludeKeyNames(PC.AllTaskKeys.map(_.key.label).toSet),
+          Seq(
+            sources.in(Compile) ++= sbt.Def.taskDyn {
+              val deps =
+                projectDependencies(thisProjectRef.in(shadowee).value, buildDependencies.in(shadowee).value.classpath)
+              sources.in(Compile).all(ScopeFilter(inProjects(deps.map(_.project): _*))).map(_.flatten)
+            }.value,
+            allDependencies ++= Def.taskDyn {
+              val deps = projectDependencies(thisProjectRef.in(shadowee).value, buildDependencies.value.classpath)
+              libraryDependencies.all(ScopeFilter(inProjects(deps.map(_.project): _*))).map(_.flatten)
+            }.value
+          )
+        ).isConsistentAt(PC.Configs: _*)
 
       def shade(shadowee: Project): Shade =
         new Shade(
           shadower,
           shadowee,
           Nil
-        ).isConsistentAt(PC.Configs, Nil)
+        ).isConsistentAt(PC.Configs: _*)
     }
 
     // Please be aware that autoShade and autoShadow can be called once each per a shadowee project, due to Project id collision.

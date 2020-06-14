@@ -9,17 +9,13 @@ lazy val deprecation = "-deprecation"
 
 import SettingTransformer._
 
-ThisBuild / version := "0.1"
-ThisBuild / scalaVersion := "2.13.2"
+version.in(ThisBuild) := "0.1"
+scalaVersion.in(ThisBuild) := "2.13.2"
 
-
-lazy val a1 = project
+lazy val a1 = project.settings(libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.10")
 lazy val a2 = project.dependsOn(a1 % "compile->compile;test->test")
 lazy val a3 = project.dependsOn(a2 % "compile->compile;test->test")
 
-lazy val shade = project
-  .shade(a3)
+lazy val shadow = project
+  .deepShadow(a3)
   .light
-  .settings(
-    scalacOptions ++= Seq("-Werror", "-Wunused")
-  )
