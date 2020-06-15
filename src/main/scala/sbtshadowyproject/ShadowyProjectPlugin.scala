@@ -34,20 +34,20 @@ object ShadowyProjectPlugin extends AutoPlugin {
           Nil
         ).isConsistentAt(PC.Configs: _*)
 
-      def deepShadow(shadowee: Project): Shadow =
+      def deepShadow(shadowee: Project, at: Seq[ConfigKey] = PC.Configs): Shadow =
         new Shadow(
           shadower,
           shadowee,
           RemoveTargetDir
             + ExcludeKeyNames(PC.AllSettingKeys.map(_.key.label).toSet)
             + ExcludeKeyNames(PC.AllTaskKeys.map(_.key.label).toSet),
-          Seq(
-            sources.in(Compile) ++= sbt.Def.taskDyn {
+          at.map(cfg =>
+            sources.in(cfg) ++= sbt.Def.taskDyn {
               val deps = buildDependencies.value.classpathTransitiveRefs(thisProjectRef.in(shadowee).value)
-              sources.in(Compile).all(ScopeFilter(inProjects(deps: _*))).map(_.flatten)
+              sources.in(cfg).all(ScopeFilter(inProjects(deps: _*))).map(_.flatten)
             }.value
           )
-        ).isConsistentAt(PC.Configs: _*)
+        ).isConsistentAt(at: _*)
 
       def shade(shadowee: Project): Shade =
         new Shade(
