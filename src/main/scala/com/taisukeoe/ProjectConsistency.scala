@@ -9,7 +9,8 @@ import sbt._
  * Project sources, resources and local jars should be consistent between a shadowee and shadowers.
  */
 object ProjectConsistency {
-  val Configs: Seq[ConfigKey] = Seq(Compile, Test)
+  val Configurations: Seq[Configuration] = Seq(Compile, Test)
+  val Configs: Seq[ConfigKey] = Configurations.map(c => ConfigKey(c.name))
 
   val SettingKeysForManagedDir: Seq[SettingKey[File]] =
     Seq(

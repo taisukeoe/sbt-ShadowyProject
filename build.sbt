@@ -18,7 +18,7 @@ lazy val sbtShadowyProject = (project in file("."))
   .disablePlugins(ScalafixPlugin)
   .settings(
     name := "sbt-shadowyproject",
-    scalacOptions ++= Seq("-deprecation", "-feature"),
+    scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked"),
     scalacOptions ++= ifScala212(scalaBinaryVersion.value)(
       Seq(
         // Avoid unused warnings flag here, and let them manage by my shadow/scalafix.

@@ -1,5 +1,7 @@
 package com.taisukeoe.internal
 
+import sbt._
+
 class ConfigParser[T](mapping: Map[String, T]) {
 
   def defaultConfig: String = "compile"
@@ -25,4 +27,10 @@ class ConfigParser[T](mapping: Map[String, T]) {
       }
       .seq
   }
+}
+
+object Parser {
+  private lazy val predefConfigs: Seq[Configuration] =
+    Seq(Default, Compile, IntegrationTest, Provided, Runtime, Test, Optional)
+  lazy val configs = new ConfigParser[Configuration](predefConfigs.map(c => c.name -> c).toMap)
 }

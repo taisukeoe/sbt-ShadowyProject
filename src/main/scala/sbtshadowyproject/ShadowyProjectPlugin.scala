@@ -7,6 +7,7 @@ import com.taisukeoe
 import com.taisukeoe.Shade
 import com.taisukeoe.Shadow
 import com.taisukeoe.ShadowyProject
+import com.taisukeoe.internal.Parser
 import com.taisukeoe.{ProjectConsistency => PC}
 
 object ShadowyProjectPlugin extends AutoPlugin {
@@ -34,20 +35,52 @@ object ShadowyProjectPlugin extends AutoPlugin {
           Nil
         ).isConsistentAt(PC.Configs: _*)
 
-      def deepShadow(shadowee: Project, at: Seq[ConfigKey] = PC.Configs): Shadow =
+      private case class ProjectConfigDependencies(from: Configuration, to: Configuration, dependent: ProjectRef) {
+        def taskKey[T](key: TaskKey[Seq[T]]): TaskKey[Seq[T]] = key.in(dependent, to)
+        def at(given: Configuration): Option[ProjectConfigDependencies] = if (from == given) Some(this) else None
+      }
+
+      private def recurProjectConfigDependencies(
+          classpathDep: ClasspathDep[ProjectRef],
+          originalFrom: Option[Configuration],
+          upstreamTo: Option[Configuration],
+          depMap: Map[ProjectRef, Seq[ClasspathDep[ProjectRef]]]
+      ): Seq[ProjectConfigDependencies] = {
+        val configMap = classpathDep.configuration.map(Parser.configs.parse).getOrElse(Seq(Compile -> Compile))
+
+        configMap.collect {
+          case (from, to) if upstreamTo.isEmpty || upstreamTo.contains(from) =>
+            ProjectConfigDependencies(originalFrom.getOrElse(from), to, classpathDep.project)
+        } ++: {
+          for {
+            classpathDep <- depMap.getOrElse(classpathDep.project, Nil)
+            (from, to) <- configMap
+          } yield recurProjectConfigDependencies(classpathDep, originalFrom.orElse(Some(from)), Some(to), depMap)
+        }.flatten
+      }
+
+      def deepShadow(shadowee: Project, at: Seq[Configuration] = PC.Configurations): Shadow =
         new Shadow(
           shadower,
           shadowee,
           RemoveTargetDir
             + ExcludeKeyNames(PC.AllSettingKeys.map(_.key.label).toSet)
             + ExcludeKeyNames(PC.AllTaskKeys.map(_.key.label).toSet),
-          at.map(cfg =>
-            sources.in(cfg) ++= sbt.Def.taskDyn {
-              val deps = buildDependencies.value.classpathTransitiveRefs(thisProjectRef.in(shadowee).value)
-              sources.in(cfg).all(ScopeFilter(inProjects(deps: _*))).map(_.flatten)
+          at.map { cfg =>
+            sources.in(cfg) ++= Def.taskDyn {
+              val depMap = buildDependencies.value.classpath
+              val shadoweeRef = thisProjectRef.in(shadowee).value
+
+              depMap
+                .getOrElse(shadoweeRef, Nil)
+                .flatMap(
+                  recurProjectConfigDependencies(_, None, None, depMap).flatMap(_.at(cfg)).map(_.taskKey(sources))
+                )
+                .join
+                .map(_.flatten)
             }.value
-          )
-        ).isConsistentAt(at: _*)
+          }
+        ).isConsistentAt(at.map(ConfigKey.configurationToKey): _*)
 
       def shade(shadowee: Project): Shade =
         new Shade(
