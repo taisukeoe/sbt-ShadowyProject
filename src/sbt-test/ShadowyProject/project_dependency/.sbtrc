@@ -1,1 +1,1 @@
-alias setFatalUnused=set shadow/scalacOptions ++= Seq("-Werror", "-Wunused")
+alias setFatalUnused=set scalacOptions.in(shadow) ++= Seq("-Werror", "-Wunused")

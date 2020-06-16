@@ -49,7 +49,8 @@ object ShadowyProjectPlugin extends AutoPlugin {
         val configMap = classpathDep.configuration.map(Parser.configs.parse).getOrElse(Seq(Compile -> Compile))
 
         configMap.collect {
-          case (from, to) if upstreamTo.isEmpty || upstreamTo.contains(from) =>
+          // Option#contains is not available in Scala 2.10
+          case (from, to) if upstreamTo.isEmpty || upstreamTo.exists(_ == from) =>
             ProjectConfigDependencies(originalFrom.getOrElse(from), to, classpathDep.project)
         } ++: {
           for {
