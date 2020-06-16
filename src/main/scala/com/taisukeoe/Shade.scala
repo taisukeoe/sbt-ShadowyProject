@@ -1,7 +1,6 @@
 package com.taisukeoe
 
 import sbt.Project
-import sbt.ProjectReference
 import sbt.Setting
 
 class Shade(
@@ -24,7 +23,5 @@ object Shade {
     override def light(shadowy: Shade): Project =
       shadowy.thisProject
         .settings(shadowy.settingOverrides)
-        .dependsOn(shadowy.original.dependencies: _*)
-        .aggregate((shadowy.original.aggregate: Seq[ProjectReference]): _*)
   }
 }
