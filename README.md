@@ -26,7 +26,7 @@ If that's a case, you can set `-Xfatal-warnings` to your original sub-project(sh
 
 ```
 // project/plugins.sbt
-addSbtPlugin("com.taisukeoe" % "sbt-shadowyproject" % "0.1.0-RC1")
+addSbtPlugin("com.taisukeoe" % "sbt-shadowyproject" % "0.1.0-RC")
 ```
 
 ```
