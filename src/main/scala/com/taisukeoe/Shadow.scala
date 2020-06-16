@@ -46,7 +46,5 @@ object Shadow {
             .flatMap(shadowy.trans.transform(_).newSettings)
         )
         .settings(shadowy.settingOverrides)
-        .dependsOn(shadowy.original.dependencies: _*)
-        .aggregate((shadowy.original.aggregate: Seq[ProjectReference]): _*)
   }
 }
