@@ -1,15 +1,13 @@
 package sbtshadowyproject
 
-import java.nio.file.Files
-
-import scala.collection.JavaConverters._
-
+import sbt.Keys._
 import sbt._
 
 import com.taisukeoe
 import com.taisukeoe.Shade
 import com.taisukeoe.Shadow
 import com.taisukeoe.ShadowyProject
+import com.taisukeoe.internal.Parser
 import com.taisukeoe.{ProjectConsistency => PC}
 
 object ShadowyProjectPlugin extends AutoPlugin {
@@ -35,14 +33,62 @@ object ShadowyProjectPlugin extends AutoPlugin {
             + ExcludeKeyNames(PC.AllSettingKeys.map(_.key.label).toSet)
             + ExcludeKeyNames(PC.AllTaskKeys.map(_.key.label).toSet),
           Nil
-        ).isConsistentAt(PC.Configs, Nil)
+        ).isConsistentAt(PC.Configs: _*)
+
+      private case class ProjectConfigDependencies(from: Configuration, to: Configuration, dependent: ProjectRef) {
+        def taskKey[T](key: TaskKey[Seq[T]]): TaskKey[Seq[T]] = key.in(dependent, to)
+        def at(given: Configuration): Option[ProjectConfigDependencies] = if (from == given) Some(this) else None
+      }
+
+      private def recurProjectConfigDependencies(
+          classpathDep: ClasspathDep[ProjectRef],
+          originalFrom: Option[Configuration],
+          upstreamTo: Option[Configuration],
+          depMap: Map[ProjectRef, Seq[ClasspathDep[ProjectRef]]]
+      ): Seq[ProjectConfigDependencies] = {
+        val configMap = classpathDep.configuration.map(Parser.configs.parse).getOrElse(Seq(Compile -> Compile))
+
+        configMap.collect {
+          // Option#contains is not available in Scala 2.10
+          case (from, to) if upstreamTo.isEmpty || upstreamTo.exists(_ == from) =>
+            ProjectConfigDependencies(originalFrom.getOrElse(from), to, classpathDep.project)
+        } ++: {
+          for {
+            classpathDep <- depMap.getOrElse(classpathDep.project, Nil)
+            (from, to) <- configMap
+          } yield recurProjectConfigDependencies(classpathDep, originalFrom.orElse(Some(from)), Some(to), depMap)
+        }.flatten
+      }
+
+      def deepShadow(shadowee: Project, at: Seq[Configuration] = PC.Configurations): Shadow =
+        new Shadow(
+          shadower,
+          shadowee,
+          RemoveTargetDir
+            + ExcludeKeyNames(PC.AllSettingKeys.map(_.key.label).toSet)
+            + ExcludeKeyNames(PC.AllTaskKeys.map(_.key.label).toSet),
+          at.map { cfg =>
+            sources.in(cfg) ++= Def.taskDyn {
+              val depMap = buildDependencies.value.classpath
+              val shadoweeRef = thisProjectRef.in(shadowee).value
+
+              depMap
+                .getOrElse(shadoweeRef, Nil)
+                .flatMap(
+                  recurProjectConfigDependencies(_, None, None, depMap).flatMap(_.at(cfg)).map(_.taskKey(sources))
+                )
+                .join
+                .map(_.flatten)
+            }.value
+          }
+        ).isConsistentAt(at.map(ConfigKey.configurationToKey): _*)
 
       def shade(shadowee: Project): Shade =
         new Shade(
           shadower,
           shadowee,
           Nil
-        ).isConsistentAt(PC.Configs, Nil)
+        ).isConsistentAt(PC.Configs: _*)
     }
 
     // Please be aware that autoShade and autoShadow can be called once each per a shadowee project, due to Project id collision.
@@ -60,87 +106,7 @@ object ShadowyProjectPlugin extends AutoPlugin {
       }
     }
 
-    implicit class ShadowyOps[Shadowy](shadowy: Shadowy)(implicit EV: ShadowyProject[Shadowy]) {
-      def isConsistentAt(configs: ConfigKey*): Shadowy = isConsistentAt(configs, Nil)
-
-      def isConsistentAt(configs: Seq[ConfigKey], tasks: Seq[AttributeKey[_]]): Shadowy = {
-        /*
-         * Since resourceGenerators in sbt plugin project lead to compile,
-         * resourceGenerators and managedResources in original project scope must be independent from shadowy projects.
-         *
-         * Instead, all files under sourceManaged or resourceManaged directories are captured to shadowy managedSources or managedResources respectively.
-         */
-        val configTaskMatrix: Seq[(ScopeAxis[ConfigKey], ScopeAxis[AttributeKey[_]])] =
-          for {
-            cfg <- if (configs.nonEmpty) configs.map(Select(_)) else Seq(This)
-            tsk <- if (tasks.nonEmpty) tasks.map(Select(_)) else Seq(Zero)
-          } yield (cfg, tsk)
-
-        val managedSettings: Seq[Seq[Setting[_]]] = for {
-          (cfg, tsk) <- configTaskMatrix
-          (
-            managedSourcesOrResources,
-            managedSourceOrResourceDirectories,
-            sourceOrResourceManaged
-          ) <- (
-              PC.TaskKeysForManagedFiles,
-              PC.SettingKeysForManagedDirs,
-              PC.SettingKeysForManagedDir
-          ).zipped
-        } yield Seq(
-          managedSourceOrResourceDirectories.in(Scope(This, cfg, tsk, Zero)) +=
-            sourceOrResourceManaged.in(Scope(Select(EV.originalOf(shadowy)), cfg, tsk, Zero)).value,
-          managedSourcesOrResources.in(Scope(This, cfg, tsk, Zero)) ++= {
-            val managedDir =
-              sourceOrResourceManaged
-                .in(Scope(Select(EV.originalOf(shadowy)), cfg, tsk, Zero))
-                .value
-            if (managedDir.exists)
-              for {
-                path <- Files.walk(managedDir.toPath).iterator().asScala.toSeq
-                file = path.toFile
-                if file.isFile
-              } yield file
-            else
-              Nil
-          }
-        )
-
-        // sbt-plugin projects have resource generators, which may cause resource files duplication in ShadowyProject.
-        val emptyGenerators: Seq[Setting[_]] = for {
-          (cfg, tsk) <- configTaskMatrix
-          sourceOrResourceGenerators <- PC.SettingKeysForGenerators
-        } yield sourceOrResourceGenerators.in(Scope(This, cfg, tsk, Zero)) := Nil
-
-        EV.reflectSettingKeys(shadowy, configs, tasks, PC.SettingKeysForUnmanagedDir)
-          .reflectSettingKeys(configs, tasks, PC.SettingKeysForUnmanagedDirs)
-          .reflectTaskKeys(configs, tasks, PC.TaskKeysForClasspath)
-          .reflectTaskKeys(configs, tasks, PC.TaskKeysForUnmanagedFiles)
-          .settings(managedSettings.flatten: _*)
-          .settings(emptyGenerators: _*)
-      }
-
-      def reflectSettingKeys[T](
-          configs: Seq[ConfigKey],
-          tasks: Seq[AttributeKey[_]],
-          keys: Seq[SettingKey[T]]
-      ): Shadowy = EV.reflectSettingKeys(shadowy, configs, tasks, keys)
-
-      def reflectTaskKeys[T](
-          configs: Seq[ConfigKey],
-          tasks: Seq[AttributeKey[_]],
-          keys: Seq[TaskKey[T]]
-      ): Shadowy = EV.reflectTaskKeys(shadowy, configs, tasks, keys)
-
-      def reflectInputKeys[T](
-          configs: Seq[ConfigKey],
-          tasks: Seq[AttributeKey[_]],
-          keys: Seq[InputKey[T]]
-      ): Shadowy = EV.reflectInputKeys(shadowy, configs, tasks, keys)
-
-      def settings(set: Setting[_]*): Shadowy = EV.settingsFor(shadowy, set)
-
-      def light: Project = EV.light(shadowy)
-    }
+    implicit class ShadowyOps[Shadowy: ShadowyProject](override val shadowy: Shadowy)
+        extends ShadowyProject.Ops[Shadowy]
   }
 }

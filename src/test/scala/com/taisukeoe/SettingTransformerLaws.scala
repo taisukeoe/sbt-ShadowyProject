@@ -6,9 +6,7 @@ import org.scalacheck.Gen
 import org.scalacheck.Prop
 import org.scalacheck.Properties
 
-class SettingTransformerLaws
-    extends Properties("SettingTransformer laws")
-    with SettingTransformerTestBase {
+class SettingTransformerLaws extends Properties("SettingTransformer laws") with SettingTransformerTestBase {
 
   private val gen = Gen.oneOf[Action](Seq(originalAlg, Remove, removeWerrorAlg, addDeprecationAlg))
 

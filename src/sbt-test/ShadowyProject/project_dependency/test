@@ -1,0 +1,7 @@
++>a3/compile
++>a3/test:compile
++>shadow/compile
++>shadow/test:compile
+>setFatalUnused
+->shadow/compile
+->shadow/test:compile

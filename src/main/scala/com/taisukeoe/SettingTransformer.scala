@@ -64,8 +64,7 @@ object SettingTransformer {
     override def newSettings: Seq[Setting[_]] = original +: added
   }
 
-  final case class Plus(left: SettingTransformer, right: SettingTransformer)
-      extends SettingTransformer {
+  final case class Plus(left: SettingTransformer, right: SettingTransformer) extends SettingTransformer {
     override def transform(setting: Setting[_]): Action =
       left.transform(setting) + right.transform(setting)
   }

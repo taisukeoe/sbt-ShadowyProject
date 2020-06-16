@@ -14,7 +14,7 @@ object Shade {
   implicit val shadowy: ShadowyProject[Shade] = new ShadowyProject[Shade] {
     override def originalOf(shadowy: Shade): Project = shadowy.original
 
-    override def settingsFor(shadowy: Shade, set: Seq[Setting[_]]): Shade =
+    override def settingsFor(set: Seq[Setting[_]])(shadowy: Shade): Shade =
       new Shade(
         shadowy.thisProject,
         shadowy.original,
