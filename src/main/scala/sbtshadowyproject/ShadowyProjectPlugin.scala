@@ -75,7 +75,9 @@ object ShadowyProjectPlugin extends AutoPlugin {
               depMap
                 .getOrElse(shadoweeRef, Nil)
                 .flatMap(
-                  recurProjectConfigDependencies(_, None, None, depMap).flatMap(_.at(cfg)).map(_.taskKey(sources))
+                  recurProjectConfigDependencies(_, None, None, depMap).flatMap(_.at(cfg)).distinct.collect {
+                    case pcd if pcd.dependent.build.getScheme == "file" => pcd.taskKey(sources)
+                  }
                 )
                 .join
                 .map(_.flatten)
