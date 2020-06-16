@@ -2,6 +2,10 @@
 +>a3/test:compile
 +>shadow/compile
 +>shadow/test:compile
++>deepShadow/compile
++>deepShadow/test:compile
 >setFatalUnused
-->shadow/compile
-->shadow/test:compile
++>shadow/compile
++>shadow/test:compile
+->deepShadow/compile
+->deepShadow/test:compile

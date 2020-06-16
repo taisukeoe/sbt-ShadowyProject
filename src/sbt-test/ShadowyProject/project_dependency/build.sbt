@@ -16,6 +16,10 @@ lazy val a1 = project.settings(libraryDependencies += "org.apache.commons" % "co
 lazy val a2 = project.dependsOn(a1 % "compile->compile;test->test")
 lazy val a3 = project.dependsOn(a2 % "compile->compile;test->test")
 
-lazy val shadow = project
+lazy val deepShadow = project
   .deepShadow(a3)
+  .light
+
+lazy val shadow = project
+  .shadow(a3)
   .light
