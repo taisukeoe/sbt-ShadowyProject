@@ -1,1 +1,1 @@
-alias setFatalUnused=;set ThisBuild/scalacOptions += "-Werror"
+alias setFatalUnused=;set scalacOptions in ThisBuild += "-Werror"
