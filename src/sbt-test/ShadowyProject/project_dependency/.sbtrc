@@ -1,1 +1,1 @@
-alias setFatalUnused=;set scalacOptions.in(shadow) ++= Seq("-Werror", "-Wunused");set scalacOptions.in(deepShadow) ++= Seq("-Werror", "-Wunused")
+alias setFatalUnused=;set ThisBuild/scalacOptions += "-Werror"
