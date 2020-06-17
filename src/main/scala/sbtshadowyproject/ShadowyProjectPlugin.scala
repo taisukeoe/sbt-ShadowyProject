@@ -97,6 +97,11 @@ object ShadowyProjectPlugin extends AutoPlugin {
             sources.in(cfg) ++= Def.taskDyn {
               originalProjectDependencies.value
                 .collect {
+                  /*
+                   * Sub-projects with non-file scheme build URI are ignored because:
+                   *   - they are defined in external space and less important to be included as sources.
+                   *   - they have pitfalls in library eviction and namespace collision.
+                   */
                   case pcd
                       if (pcd.from == cfg || cfg.extendsConfigs
                         .contains(pcd.from)) && pcd.dependent.build.getScheme == "file" =>
