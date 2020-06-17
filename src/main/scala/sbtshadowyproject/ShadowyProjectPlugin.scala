@@ -90,8 +90,9 @@ object ShadowyProjectPlugin extends AutoPlugin {
             depMap
               .getOrElse(shadoweeRef, Nil)
               .flatMap(
-                recurProjectConfigDependencies(_, None, None, depMap).distinct
+                recurProjectConfigDependencies(_, None, None, depMap)
               )
+              .distinct
           }) +: at.map { cfg =>
             sources.in(cfg) ++= Def.taskDyn {
               originalProjectDependencies.value
