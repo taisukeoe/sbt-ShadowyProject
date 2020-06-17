@@ -74,7 +74,7 @@ object ShadowyProjectPlugin extends AutoPlugin {
       }
 
       val originalProjectDependencies: SettingKey[Seq[ProjectConfigDependencies]] =
-        SettingKey[Seq[ProjectConfigDependencies]]("originalProjectDependencies")
+        settingKey("originalProjectDependencies")
 
       def deepShadow(shadowee: Project, at: Seq[Configuration] = PC.Configurations): Shadow =
         new Shadow(
