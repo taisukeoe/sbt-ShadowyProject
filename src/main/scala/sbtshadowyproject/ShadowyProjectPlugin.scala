@@ -52,7 +52,7 @@ object ShadowyProjectPlugin extends AutoPlugin {
         val configMap = Parser.configs.parse(classpathDep.configuration.getOrElse(defaultConfigString))
 
         val filteredConfig = configMap.filter {
-          // Option#contains is unavailable in Scala 2.13
+          // Option#contains is unavailable in Scala 2.10
           case (from, _) => upstreamTo.isEmpty || upstreamTo.exists(_ == from)
         }
 
