@@ -35,9 +35,11 @@ object ShadowyProjectPlugin extends AutoPlugin {
           Nil
         ).isConsistentAt(PC.Configs: _*)
 
-      private case class ProjectConfigDependencies(from: Configuration, to: Configuration, dependent: ProjectRef) {
+      case class ProjectConfigDependencies(from: Configuration, to: Configuration, dependent: ProjectRef) {
         def taskKey[T](key: TaskKey[Seq[T]]): TaskKey[Seq[T]] = key.in(dependent, to)
         def at(given: Configuration): Option[ProjectConfigDependencies] = if (from == given) Some(this) else None
+
+        override def toString: String = s"${dependent.project} % $from->$to : @ ${dependent.build}"
       }
 
       private def recurProjectConfigDependencies(
@@ -46,19 +48,33 @@ object ShadowyProjectPlugin extends AutoPlugin {
           upstreamTo: Option[Configuration],
           depMap: Map[ProjectRef, Seq[ClasspathDep[ProjectRef]]]
       ): Seq[ProjectConfigDependencies] = {
-        val configMap = classpathDep.configuration.map(Parser.configs.parse).getOrElse(Seq(Compile -> Compile))
+        val defaultConfigString = "compile->compile"
+        val configMap = Parser.configs.parse(classpathDep.configuration.getOrElse(defaultConfigString))
 
-        configMap.collect {
-          // Option#contains is not available in Scala 2.10
-          case (from, to) if upstreamTo.isEmpty || upstreamTo.exists(_ == from) =>
-            ProjectConfigDependencies(originalFrom.getOrElse(from), to, classpathDep.project)
+        val filteredConfig = configMap.filter {
+          // Option#contains is unavailable in Scala 2.10
+          case (from, _) => upstreamTo.isEmpty || upstreamTo.exists(_ == from)
+        }
+
+        filteredConfig.map {
+          case (from, to) => ProjectConfigDependencies(originalFrom.getOrElse(from), to, classpathDep.project)
         } ++: {
           for {
-            classpathDep <- depMap.getOrElse(classpathDep.project, Nil)
-            (from, to) <- configMap
-          } yield recurProjectConfigDependencies(classpathDep, originalFrom.orElse(Some(from)), Some(to), depMap)
+            nextDep <- depMap.getOrElse(classpathDep.project, Nil)
+            (currentFrom, currentTo) <- filteredConfig
+            (nextFrom, _) <- Parser.configs.parse(nextDep.configuration.getOrElse(defaultConfigString))
+            if nextFrom == currentTo
+          } yield recurProjectConfigDependencies(
+            nextDep,
+            originalFrom.orElse(Some(currentFrom)),
+            Some(currentTo),
+            depMap
+          )
         }.flatten
       }
+
+      val originalProjectDependencies: SettingKey[Seq[ProjectConfigDependencies]] =
+        settingKey("originalProjectDependencies")
 
       def deepShadow(shadowee: Project, at: Seq[Configuration] = PC.Configurations): Shadow =
         new Shadow(
@@ -67,16 +83,30 @@ object ShadowyProjectPlugin extends AutoPlugin {
           RemoveTargetDir
             + ExcludeKeyNames(PC.AllSettingKeys.map(_.key.label).toSet)
             + ExcludeKeyNames(PC.AllTaskKeys.map(_.key.label).toSet),
-          at.map { cfg =>
-            sources.in(cfg) ++= Def.taskDyn {
-              val depMap = buildDependencies.value.classpath
-              val shadoweeRef = thisProjectRef.in(shadowee).value
+          (originalProjectDependencies := {
+            val depMap = buildDependencies.value.classpath
+            val shadoweeRef = thisProjectRef.in(shadowee).value
 
-              depMap
-                .getOrElse(shadoweeRef, Nil)
-                .flatMap(
-                  recurProjectConfigDependencies(_, None, None, depMap).flatMap(_.at(cfg)).map(_.taskKey(sources))
-                )
+            depMap
+              .getOrElse(shadoweeRef, Nil)
+              .flatMap(
+                recurProjectConfigDependencies(_, None, None, depMap)
+              )
+              .distinct
+          }) +: at.map { cfg =>
+            sources.in(cfg) ++= Def.taskDyn {
+              originalProjectDependencies.value
+                .collect {
+                  /*
+                   * Sub-projects with non-file scheme build URI are ignored because:
+                   *   - they are defined in external space and less important to be included as sources.
+                   *   - they have pitfalls in library eviction and namespace collision.
+                   */
+                  case pcd
+                      if (pcd.from == cfg || cfg.extendsConfigs
+                        .contains(pcd.from)) && pcd.dependent.build.getScheme == "file" =>
+                    pcd.taskKey(sources)
+                }
                 .join
                 .map(_.flatten)
             }.value

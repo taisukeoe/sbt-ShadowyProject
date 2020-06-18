@@ -1,11 +1,42 @@
-+>a3/compile
-+>a3/test:compile
+>show deepShadowA2/originalProjectDependencies
+>show deepShadowA2/compile:sources
+>show deepShadowA2/test:sources
+
+>show deepShadowA3/originalProjectDependencies
+>show deepShadowA3/compile:sources
+>show deepShadowA3/test:sources
+
+>show deepShadowA4/originalProjectDependencies
+>show deepShadowA4/compile:sources
+>show deepShadowA4/test:sources
+
+>show deepShadowA5/originalProjectDependencies
+>show deepShadowA5/compile:sources
+>show deepShadowA5/test:sources
+
+# direct dependency
++>a2/compile
+->a2/test:compile
++>deepShadowA2/compile
+->deepShadowA2/test:compile
+
+# recursive dependency
++>a5/compile
++>a5/test:compile
 +>shadow/compile
 +>shadow/test:compile
-+>deepShadow/compile
-+>deepShadow/test:compile
++>deepShadowA3/compile
++>deepShadowA3/test:compile
++>deepShadowA4/compile
++>deepShadowA4/test:compile
++>deepShadowA5/compile
++>deepShadowA5/test:compile
 >setFatalUnused
 +>shadow/compile
 +>shadow/test:compile
-->deepShadow/compile
-->deepShadow/test:compile
+->deepShadowA3/compile
+->deepShadowA3/test:compile
+->deepShadowA4/compile
+->deepShadowA4/test:compile
+->deepShadowA5/compile
+->deepShadowA5/test:compile
