@@ -69,19 +69,19 @@ lazy val deepShadowA5 = project
 ```
 sbt> show deepShadowA5/compile:sources
 
-[info] [info] * /private/var/folders/64/dlcmkyhd7c58mknm5_66xnjc0000gn/T/sbt_e143c3c7/project_dependency/a5/src/main/scala/A5.scala
-[info] [info] * /private/var/folders/64/dlcmkyhd7c58mknm5_66xnjc0000gn/T/sbt_e143c3c7/project_dependency/a4/src/main/scala/A4.scala
-[info] [info] * /private/var/folders/64/dlcmkyhd7c58mknm5_66xnjc0000gn/T/sbt_e143c3c7/project_dependency/a3/src/main/scala/A3.scala
-[info] [info] * /private/var/folders/64/dlcmkyhd7c58mknm5_66xnjc0000gn/T/sbt_e143c3c7/project_dependency/a2/src/main/scala/A2.scala
-[info] [info] * /private/var/folders/64/dlcmkyhd7c58mknm5_66xnjc0000gn/T/sbt_e143c3c7/project_dependency/a1/src/main/scala/A1.scala
+[info] [info] * /your/temp/dir/project_dependency/a5/src/main/scala/A5.scala
+[info] [info] * /your/temp/dir/project_dependency/a4/src/main/scala/A4.scala
+[info] [info] * /your/temp/dir/project_dependency/a3/src/main/scala/A3.scala
+[info] [info] * /your/temp/dir/project_dependency/a2/src/main/scala/A2.scala
+[info] [info] * /your/temp/dir/project_dependency/a1/src/main/scala/A1.scala
 ```
 
 ```
 sbt> show deepShadowA5/test:sources
 
-[info] [info] * /private/var/folders/64/dlcmkyhd7c58mknm5_66xnjc0000gn/T/sbt_e143c3c7/project_dependency/a5/src/test/scala/A5Test.scala
-[info] [info] * /private/var/folders/64/dlcmkyhd7c58mknm5_66xnjc0000gn/T/sbt_e143c3c7/project_dependency/a4/src/test/scala/A4Test.scala
-[info] [info] * /private/var/folders/64/dlcmkyhd7c58mknm5_66xnjc0000gn/T/sbt_e143c3c7/project_dependency/a3/src/test/scala/A3Test.scala
+[info] [info] * /your/temp/dir/project_dependency/a5/src/test/scala/A5Test.scala
+[info] [info] * /your/temp/dir/project_dependency/a4/src/test/scala/A4Test.scala
+[info] [info] * /your/temp/dir/project_dependency/a3/src/test/scala/A3Test.scala
 ```
 
 So that you can run a task with your favorite config (e.g. compile with your favorite scalacOptions or run Scalafix with preferable settings) against all sub-project sources at once.
