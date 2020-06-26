@@ -19,7 +19,7 @@ lazy val main = crossProject(JVMPlatform, MyPlatform)
   .crossType(CrossType.Full)
   .enablePlugins(SbtPlugin)
   .enablePlugins(GitVersioning)
-//  .disablePlugins(ScalafixPlugin)
+  //  .disablePlugins(ScalafixPlugin)
   .settings(
     name := "sbt-shadowyproject",
     scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked"),
@@ -66,7 +66,6 @@ lazy val main = crossProject(JVMPlatform, MyPlatform)
     },
     scriptedBufferLog := false
   )
-  .settings(Seq(Compile, Test).map(_ / console / scalacOptions -= "-Xlint"))
   .mySettings(
     Compile / compile / scalacOptions -= "-Xfatal-warnings",
     ScalafixSettings.permanent

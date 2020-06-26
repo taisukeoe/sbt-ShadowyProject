@@ -18,14 +18,13 @@ object ScalafixSettings {
 }
 
 object MyPlatform extends sbtcrossproject.Platform {
-  def identifier: String                = "me"
-  def sbtSuffix: String                 = "Me"
+  def identifier: String = "me"
+  def sbtSuffix: String = "Me"
   def enable(project: Project): Project = project
 }
 
 object MyPlatformOps {
-  implicit def MyCrossProjectBuilderOps(
-                                         builder: CrossProject.Builder): MyCrossProjectOps =
+  implicit def MyCrossProjectBuilderOps(builder: CrossProject.Builder): MyCrossProjectOps =
     new MyCrossProjectOps(builder)
 
   implicit class MyCrossProjectOps(project: CrossProject) {
