@@ -48,7 +48,6 @@ lazy val main = crossProject(JVMPlatform, MyPlatform)
         "-language:existentials"
       )
     ),
-    Compile / compile / scalacOptions += "-Xfatal-warnings",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.1.0" % Test,
       "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
@@ -66,8 +65,10 @@ lazy val main = crossProject(JVMPlatform, MyPlatform)
     },
     scriptedBufferLog := false
   )
+  .jvmSettings(
+    Compile / compile / scalacOptions += "-Xfatal-warnings"
+  )
   .mySettings(
-    Compile / compile / scalacOptions -= "-Xfatal-warnings",
     ScalafixSettings.permanent
   )
 
