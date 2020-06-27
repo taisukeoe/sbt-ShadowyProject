@@ -47,18 +47,12 @@ import scala.language.implicitConversions
 object CrossPlugin extends AutoPlugin {
   override def trigger = allRequirements
 
-  @deprecated("Use autoImport instead.", "0.5.0")
-  val AutoImport = autoImport
-
   object autoImport {
 
     type CrossType = com.taisukeoe.composite.CrossType
     val CrossType = com.taisukeoe.composite.CrossType
 
     // The crossProject macro
-
-    @deprecated("use crossProject(JSPlatform, JVMPlatform)", "0.1.0") def crossProject: CrossProject.Builder =
-      macro CrossProjectMacros.oldCrossProject_impl
 
     def crossProject(platforms: Platform*): CrossProject.Builder =
       macro CrossProjectMacros.vargCrossProject_impl

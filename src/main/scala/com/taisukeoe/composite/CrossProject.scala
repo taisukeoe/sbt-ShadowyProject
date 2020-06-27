@@ -84,10 +84,6 @@ final class CrossProject private[composite] (
   def configure(transforms: (Project => Project)*): CrossProject =
     transform(_.configure(transforms: _*))
 
-  @deprecated("use configure", "0.1.0")
-  def configureAll(transforms: (Project => Project)*): CrossProject =
-    configure(transforms: _*)
-
   def configurePlatform(platforms: Platform*)(f: Project => Project): CrossProject =
     configurePlatforms(platforms: _*)(f)
 
@@ -161,10 +157,6 @@ object CrossProject {
   ) {
     private[CrossProject] def this(id: String, base: File, platforms: Seq[Platform], internal: Boolean) =
       this(id, base, platforms, CrossType.Full, None)
-
-    @deprecated("Use CrossProject(id, base)(platforms) instead", "0.3.1")
-    def this(id: String, base: File, platforms: Platform*) =
-      this(id, base, platforms, internal = true)
 
     /** Specify a platform that should not receive a suffix in its ID.
       *
@@ -269,9 +261,4 @@ object CrossProject {
 
   def apply(id: String, base: File)(platforms: Platform*): Builder =
     new Builder(id, base, platforms, internal = true)
-
-  @deprecated("Use the other overload of apply() and methods of the returned Builder.", "0.3.1")
-  def apply(id: String, base: File, crossType: CrossType, platforms: Platform*): CrossProject = {
-    apply(id, base)(platforms: _*).crossType(crossType)
-  }
 }

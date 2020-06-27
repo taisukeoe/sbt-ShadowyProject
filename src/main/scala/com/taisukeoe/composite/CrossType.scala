@@ -41,22 +41,7 @@ import java.io.File
 
 abstract class CrossType {
 
-  /** The base directory for a (true sbt) Project
-    *  @param crossBase The base directory of the CrossProject
-    *  @param projectType "jvm" or "js". Other values may be supported
-    */
-  @deprecated("use platformDir", "0.1.0")
-  def projectDir(crossBase: File, projectType: String): File
-
   def projectDir(crossBase: File, platform: Platform): File
-
-  /** The base directory for the JVM project */
-  @deprecated("use platformDir(crossBase, JVMPlatform)", "0.1.0")
-  final def jvmDir(crossBase: File): File = platformDir(crossBase, JVMPlatform)
-
-  /** The base directory for the JS project */
-  @deprecated("use platformDir(crossBase, JSPlatform)", "0.1.0")
-  final def jsDir(crossBase: File): File = projectDir(crossBase, "js")
 
   /** The base directory for a (true sbt) Project
     *  @param crossBase The base directory of the CrossProject
@@ -86,10 +71,6 @@ object CrossType {
     */
   object Full extends CrossType {
 
-    @deprecated("use projectDir(crossBase: File, platform: Platform): File", "0.1.0")
-    def projectDir(crossBase: File, projectType: String): File =
-      crossBase / projectType
-
     def projectDir(crossBase: File, platform: Platform): File =
       crossBase / platform.identifier
 
@@ -107,9 +88,6 @@ object CrossType {
     * </pre>
     */
   object Pure extends CrossType {
-    @deprecated("use projectDir(crossBase: File, platform: Platform): File", "0.1.0")
-    def projectDir(crossBase: File, projectType: String): File =
-      crossBase / ("." + projectType)
 
     def projectDir(crossBase: File, platform: Platform): File =
       crossBase / ("." + platform.identifier)
@@ -127,9 +105,6 @@ object CrossType {
     * </pre>
     */
   object Dummy extends CrossType {
-    @deprecated("use projectDir(crossBase: File, platform: Platform): File", "0.1.0")
-    def projectDir(crossBase: File, projectType: String): File =
-      crossBase / projectType
 
     def projectDir(crossBase: File, platform: Platform): File =
       crossBase / platform.identifier
