@@ -38,11 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import scala.language.experimental.macros
 
 import sbt._
-import sbt.KeyRanks.BSetting
 
 import scala.language.implicitConversions
-
-//import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 
 object CrossPlugin extends AutoPlugin {
   override def trigger = allRequirements
@@ -54,7 +51,7 @@ object CrossPlugin extends AutoPlugin {
 
     // The crossProject macro
 
-    def crossProject(platforms: Platform*): CrossProject.Builder =
+    def refactoringProject(platforms: Platform*): CrossProject.Builder =
       macro CrossProjectMacros.vargCrossProject_impl
 
     // Cross-classpath dependency builders
@@ -67,20 +64,20 @@ object CrossPlugin extends AutoPlugin {
 
     // The JVM platform
 
-    val JVMPlatform = com.taisukeoe.composite.Primary
+    val Primary = com.taisukeoe.composite.Primary
     val Refactoring = com.taisukeoe.composite.Refactoring
 
-    implicit def JVMCrossProjectBuilderOps(builder: CrossProject.Builder): JVMCrossProjectOps =
-      new JVMCrossProjectOps(builder)
+    implicit def PrimaryCrossProjectBuilderOps(builder: CrossProject.Builder): PrimaryCrossProjectOps =
+      new PrimaryCrossProjectOps(builder)
 
-    implicit class JVMCrossProjectOps(project: CrossProject) {
-      def jvm: Project = project.projects(JVMPlatform)
+    implicit class PrimaryCrossProjectOps(project: CrossProject) {
+      def primary: Project = project.projects(Primary)
 
-      def jvmSettings(ss: Def.SettingsDefinition*): CrossProject =
-        jvmConfigure(_.settings(ss: _*))
+      def primarySettings(ss: Def.SettingsDefinition*): CrossProject =
+        primaryConfigure(_.settings(ss: _*))
 
-      def jvmConfigure(transformer: Project => Project): CrossProject =
-        project.configurePlatform(JVMPlatform)(transformer)
+      def primaryConfigure(transformer: Project => Project): CrossProject =
+        project.configurePlatform(Primary)(transformer)
     }
 
     lazy val crossProjectPlatform =
