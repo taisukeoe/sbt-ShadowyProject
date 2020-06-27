@@ -2,9 +2,7 @@ lazy val fatalWarnings = "-Xfatal-warnings"
 lazy val unused = "-Ywarn-unused"
 lazy val deprecation = "-deprecation"
 
-lazy val shadowee = crossProject(JVMPlatform, Refactoring)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
+lazy val shadowee = crossProject()
   .settings(
     version := "0.1",
     scalaVersion := "2.13.2",

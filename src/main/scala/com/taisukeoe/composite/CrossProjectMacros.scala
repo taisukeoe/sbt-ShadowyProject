@@ -86,13 +86,9 @@ private[composite] object CrossProjectMacros {
     )
   }
 
-  def oldCrossProject_impl(c: Context): c.Expr[CrossProject.Builder] = {
-    c.warning(c.enclosingPosition, "use crossProject(JSPlatform, JVMPlatform)")
-    crossProject_impl(c)(Nil)
-  }
-
   def vargCrossProject_impl(c: Context)(platforms: c.Expr[Platform]*): c.Expr[CrossProject.Builder] = {
     import c.universe._
-    crossProject_impl(c)(platforms.toList)
+    val withDefaults: List[c.Expr[Platform]] = reify(JVMPlatform) :: reify(Refactoring) :: platforms.toList
+    crossProject_impl(c)(withDefaults)
   }
 }

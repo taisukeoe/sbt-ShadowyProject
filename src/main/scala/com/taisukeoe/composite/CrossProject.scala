@@ -152,59 +152,18 @@ object CrossProject {
       id: String,
       base: File,
       platforms: Seq[Platform],
-      _crossType: CrossType,
-      platformWithoutSuffix: Option[Platform]
   ) {
     private[CrossProject] def this(id: String, base: File, platforms: Seq[Platform], internal: Boolean) =
-      this(id, base, platforms, CrossType.Full, None)
-
-    /** Specify a platform that should not receive a suffix in its ID.
-      *
-      *  For example,
-      *  {{{
-      *  val foo = crossProject(JSPlatform, JVMPlatform, NativePlatform)
-      *    .withoutSuffixFor(JVMPlatform)
-      *    .settings(...)
-      *
-      *  val fooJS = foo.js
-      *  val fooJVM = foo.jvm
-      *  val fooNative = foo.native
-      *  }}}
-      *  will give the ID `foo` to `foo.jvm`, instead of the default `fooJVM`.
-      *  This then allows to run sbt tasks such as
-      *  {{{
-      *  > foo/test
-      *  }}}
-      *  instead of
-      *  {{{
-      *  > fooJVM/test
-      *  }}}
-      *  for the JVM.
-      *
-      *  This is useful if there is one "default" platform in your project,
-      *  which is more commonly manipulated than the others.
-      */
-    def withoutSuffixFor(platform: Platform): Builder =
-      copy(platformWithoutSuffix = Some(platform))
-
-    def crossType(crossType: CrossType): Builder =
-      copy(crossType = crossType)
-
-    private def copy(
-        crossType: CrossType = _crossType,
-        platformWithoutSuffix: Option[Platform] = platformWithoutSuffix
-    ): Builder = {
-      new Builder(id, base, platforms, crossType, platformWithoutSuffix)
-    }
+      this(id, base, platforms)
 
     def build(): CrossProject = {
-      val crossType = _crossType
+      val crossType = CrossType.Pure
       val sharedSrc = sharedSrcSettings(crossType)
 
       val projects =
         platforms.map { platform =>
           val projectID =
-            if (platformWithoutSuffix.exists(_ == platform)) id
+            if (platform == JVMPlatform) id
             else id + platform.sbtSuffix
 
           platform -> platform.enable(
