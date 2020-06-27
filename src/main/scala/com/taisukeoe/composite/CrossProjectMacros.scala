@@ -12,14 +12,14 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, this
+ * Redistributions of source code must retain the above copyright notice, this
   list of conditions and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright notice,
+ * Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
 
-* Neither the name of sbt-crossproject-project nor the names of its
+ * Neither the name of sbt-crossproject-project nor the names of its
   contributors may be used to endorse or promote products derived from
   this software without specific prior written permission.
 
@@ -39,49 +39,32 @@ import java.io.File
 import scala.reflect.macros.Context
 
 private[composite] object CrossProjectMacros {
-  def crossProject_impl(c: Context)(
-      platformsArgs: List[c.Expr[Platform]]): c.Expr[CrossProject.Builder] = {
+  def crossProject_impl(c: Context)(platformsArgs: List[c.Expr[Platform]]): c.Expr[CrossProject.Builder] = {
     import c.universe._
 
     val enclosingValName = MacroUtils.definingValName(
       c,
-      methodName =>
-        s"""$methodName must be directly assigned to a val, such as `val x = $methodName`.""")
+      methodName => s"""$methodName must be directly assigned to a val, such as `val x = $methodName`."""
+    )
 
     val name = Literal(Constant(enclosingValName))
 
     def javaIoFile =
       reify { new _root_.java.io.File(c.Expr[String](name).splice) }.tree
 
-    val platforms =
-      if (!platformsArgs.isEmpty) platformsArgs.map(_.tree).toList
-      else {
-        // compatibility
-        val jsPlatform =
-          Select(
-            Select(
-              Ident(newTermName("_root_")),
-              newTermName("scalajscrossproject")
-            ),
-            newTermName("JSPlatform")
-          )
-        val jvmPlatform =
-          Select(
-            Select(
-              Ident(newTermName("_root_")),
-              newTermName("sbtcrossproject")
-            ),
-            newTermName("JVMPlatform")
-          )
-
-        List(jsPlatform, jvmPlatform)
-      }
+    val platforms = platformsArgs.map(_.tree).toList
 
     val crossProjectCompanionTerm =
       Select(
         Select(
-          Ident(newTermName("_root_")),
-          newTermName("sbtcrossproject")
+          Select(
+            Select(
+              Ident(newTermName("_root_")),
+              newTermName("com")
+            ),
+            newTermName("taisukeoe")
+          ),
+          newTermName("composite")
         ),
         newTermName("CrossProject")
       )
@@ -99,7 +82,8 @@ private[composite] object CrossProjectMacros {
           List(name, javaIoFile)
         ),
         platforms
-      ))
+      )
+    )
   }
 
   def oldCrossProject_impl(c: Context): c.Expr[CrossProject.Builder] = {
@@ -107,8 +91,7 @@ private[composite] object CrossProjectMacros {
     crossProject_impl(c)(Nil)
   }
 
-  def vargCrossProject_impl(c: Context)(
-      platforms: c.Expr[Platform]*): c.Expr[CrossProject.Builder] = {
+  def vargCrossProject_impl(c: Context)(platforms: c.Expr[Platform]*): c.Expr[CrossProject.Builder] = {
     import c.universe._
     crossProject_impl(c)(platforms.toList)
   }

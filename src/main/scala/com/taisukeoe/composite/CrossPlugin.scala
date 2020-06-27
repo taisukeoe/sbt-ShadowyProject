@@ -12,14 +12,14 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, this
+ * Redistributions of source code must retain the above copyright notice, this
   list of conditions and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright notice,
+ * Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
 
-* Neither the name of sbt-crossproject-project nor the names of its
+ * Neither the name of sbt-crossproject-project nor the names of its
   contributors may be used to endorse or promote products derived from
   this software without specific prior written permission.
 
@@ -65,20 +65,18 @@ object CrossPlugin extends AutoPlugin {
 
     // Cross-classpath dependency builders
 
-    final implicit def toCrossClasspathDependencyConstructor(
-        cp: CrossProject): CrossClasspathDependency.Constructor =
+    final implicit def toCrossClasspathDependencyConstructor(cp: CrossProject): CrossClasspathDependency.Constructor =
       new CrossClasspathDependency.Constructor(cp)
 
-    final implicit def toCrossClasspathDependency(
-        cp: CrossProject): CrossClasspathDependency =
+    final implicit def toCrossClasspathDependency(cp: CrossProject): CrossClasspathDependency =
       new CrossClasspathDependency(cp, None)
 
     // The JVM platform
 
     val JVMPlatform = com.taisukeoe.composite.JVMPlatform
+    val Refactoring = com.taisukeoe.composite.Refactoring
 
-    implicit def JVMCrossProjectBuilderOps(
-        builder: CrossProject.Builder): JVMCrossProjectOps =
+    implicit def JVMCrossProjectBuilderOps(builder: CrossProject.Builder): JVMCrossProjectOps =
       new JVMCrossProjectOps(builder)
 
     implicit class JVMCrossProjectOps(project: CrossProject) {

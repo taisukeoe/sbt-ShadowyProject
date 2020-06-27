@@ -12,14 +12,14 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, this
+ * Redistributions of source code must retain the above copyright notice, this
   list of conditions and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright notice,
+ * Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
 
-* Neither the name of sbt-crossproject-project nor the names of its
+ * Neither the name of sbt-crossproject-project nor the names of its
   contributors may be used to endorse or promote products derived from
   this software without specific prior written permission.
 
@@ -54,8 +54,8 @@ final class CrossProject private[composite] (
       refs.toSeq.flatMap(_.projects).groupBy(_._1).mapValues(_.map(_._2))
 
     mapProjectsByPlatform((platform, project) =>
-      project.aggregate(aggregatesByPlatform(platform).map(p =>
-        p: ProjectReference): _*))
+      project.aggregate(aggregatesByPlatform(platform).map(p => p: ProjectReference): _*)
+    )
   }
 
   def dependsOn(deps: CrossClasspathDependency*): CrossProject = {
@@ -67,19 +67,18 @@ final class CrossProject private[composite] (
           dep.project.projects.map {
             case (platform, project) =>
               platform -> ClasspathDependency(project, dep.configuration)
-        })
+          }
+        )
         .groupBy(_._1)
         .mapValues(_.map(_._2))
 
-    mapProjectsByPlatform((platform, project) =>
-      project.dependsOn(dependenciesByPlatform(platform): _*))
+    mapProjectsByPlatform((platform, project) => project.dependsOn(dependenciesByPlatform(platform): _*))
   }
 
   def configs(cs: Configuration*): CrossProject =
     transform(_.configs(cs: _*))
 
-  def configureCross(
-      transforms: (CrossProject => CrossProject)*): CrossProject =
+  def configureCross(transforms: (CrossProject => CrossProject)*): CrossProject =
     transforms.foldLeft(this)((p, t) => t(p))
 
   def configure(transforms: (Project => Project)*): CrossProject =
@@ -89,16 +88,13 @@ final class CrossProject private[composite] (
   def configureAll(transforms: (Project => Project)*): CrossProject =
     configure(transforms: _*)
 
-  def configurePlatform(platforms: Platform*)(
-      f: Project => Project): CrossProject =
+  def configurePlatform(platforms: Platform*)(f: Project => Project): CrossProject =
     configurePlatforms(platforms: _*)(f)
 
-  def configurePlatforms(platforms: Platform*)(
-      f: Project => Project): CrossProject = {
+  def configurePlatforms(platforms: Platform*)(f: Project => Project): CrossProject = {
 
     val updatedProjects =
-      platforms.foldLeft(projects)((acc, platform) =>
-        acc.updated(platform, f(acc(platform))))
+      platforms.foldLeft(projects)((acc, platform) => acc.updated(platform, f(acc(platform))))
 
     new CrossProject(id, crossType, updatedProjects)
   }
@@ -110,8 +106,7 @@ final class CrossProject private[composite] (
     transform(_.enablePlugins(ns: _*))
 
   def in(dir: File): CrossProject =
-    mapProjectsByPlatform(
-      (platform, project) => project.in(crossType.platformDir(dir, platform)))
+    mapProjectsByPlatform((platform, project) => project.in(crossType.platformDir(dir, platform)))
 
   def overrideConfigs(cs: Configuration*): CrossProject =
     transform(_.overrideConfigs(cs: _*))
@@ -119,20 +114,20 @@ final class CrossProject private[composite] (
   def settings(ss: Def.SettingsDefinition*): CrossProject =
     transform(_.settings(ss: _*))
 
-  def platformsSettings(platforms: Platform*)(
-      ss: Def.SettingsDefinition*): CrossProject =
+  def platformsSettings(platforms: Platform*)(ss: Def.SettingsDefinition*): CrossProject =
     configurePlatforms(platforms: _*)(_.settings(ss: _*))
 
   override def toString(): String =
-    projects.map {
-      case (platform, project) =>
-        s"${platform.identifier} = $project"
-    }.mkString("CrossProject(", ",", ")")
+    projects
+      .map {
+        case (platform, project) =>
+          s"${platform.identifier} = $project"
+      }
+      .mkString("CrossProject(", ",", ")")
 
   private def platforms = projects.keySet
 
-  private def mapProjectsByPlatform(
-      f: (Platform, Project) => Project): CrossProject = {
+  private def mapProjectsByPlatform(f: (Platform, Project) => Project): CrossProject = {
     val updatedProjects = projects.map {
       case (platform, project) => platform -> f(platform, project)
     }
@@ -164,10 +159,7 @@ object CrossProject {
       _crossType: CrossType,
       platformWithoutSuffix: Option[Platform]
   ) {
-    private[CrossProject] def this(id: String,
-                                   base: File,
-                                   platforms: Seq[Platform],
-                                   internal: Boolean) =
+    private[CrossProject] def this(id: String, base: File, platforms: Seq[Platform], internal: Boolean) =
       this(id, base, platforms, CrossType.Full, None)
 
     @deprecated("Use CrossProject(id, base)(platforms) instead", "0.3.1")
@@ -175,31 +167,31 @@ object CrossProject {
       this(id, base, platforms, internal = true)
 
     /** Specify a platform that should not receive a suffix in its ID.
-     *
-     *  For example,
-     *  {{{
-     *  val foo = crossProject(JSPlatform, JVMPlatform, NativePlatform)
-     *    .withoutSuffixFor(JVMPlatform)
-     *    .settings(...)
-     *
-     *  val fooJS = foo.js
-     *  val fooJVM = foo.jvm
-     *  val fooNative = foo.native
-     *  }}}
-     *  will give the ID `foo` to `foo.jvm`, instead of the default `fooJVM`.
-     *  This then allows to run sbt tasks such as
-     *  {{{
-     *  > foo/test
-     *  }}}
-     *  instead of
-     *  {{{
-     *  > fooJVM/test
-     *  }}}
-     *  for the JVM.
-     *
-     *  This is useful if there is one "default" platform in your project,
-     *  which is more commonly manipulated than the others.
-     */
+      *
+      *  For example,
+      *  {{{
+      *  val foo = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+      *    .withoutSuffixFor(JVMPlatform)
+      *    .settings(...)
+      *
+      *  val fooJS = foo.js
+      *  val fooJVM = foo.jvm
+      *  val fooNative = foo.native
+      *  }}}
+      *  will give the ID `foo` to `foo.jvm`, instead of the default `fooJVM`.
+      *  This then allows to run sbt tasks such as
+      *  {{{
+      *  > foo/test
+      *  }}}
+      *  instead of
+      *  {{{
+      *  > fooJVM/test
+      *  }}}
+      *  for the JVM.
+      *
+      *  This is useful if there is one "default" platform in your project,
+      *  which is more commonly manipulated than the others.
+      */
     def withoutSuffixFor(platform: Platform): Builder =
       copy(platformWithoutSuffix = Some(platform))
 
@@ -239,9 +231,7 @@ object CrossProject {
     }
 
     private def sharedSrcSettings(crossType: CrossType): Seq[Setting[_]] = {
-      def makeCrossSources(sharedSrcDir: Option[File],
-                           scalaBinaryVersion: String,
-                           cross: Boolean): Seq[File] = {
+      def makeCrossSources(sharedSrcDir: Option[File], scalaBinaryVersion: String, cross: Boolean): Seq[File] = {
         sharedSrcDir match {
           case Some(dir) =>
             if (cross)
@@ -254,22 +244,25 @@ object CrossProject {
 
       Seq(
         unmanagedSourceDirectories in Compile ++= {
-          makeCrossSources(crossType.sharedSrcDir(baseDirectory.value, "main"),
-                           scalaBinaryVersion.value,
-                           crossPaths.value)
+          makeCrossSources(
+            crossType.sharedSrcDir(baseDirectory.value, "main"),
+            scalaBinaryVersion.value,
+            crossPaths.value
+          )
         },
         unmanagedSourceDirectories in Test ++= {
-          makeCrossSources(crossType.sharedSrcDir(baseDirectory.value, "test"),
-                           scalaBinaryVersion.value,
-                           crossPaths.value)
+          makeCrossSources(
+            crossType.sharedSrcDir(baseDirectory.value, "test"),
+            scalaBinaryVersion.value,
+            crossPaths.value
+          )
         }
       )
     }
   }
 
   object Builder {
-    final implicit def crossProjectFromBuilder(
-        builder: CrossProject.Builder): CrossProject = {
+    final implicit def crossProjectFromBuilder(builder: CrossProject.Builder): CrossProject = {
       builder.build()
     }
   }
@@ -277,13 +270,8 @@ object CrossProject {
   def apply(id: String, base: File)(platforms: Platform*): Builder =
     new Builder(id, base, platforms, internal = true)
 
-  @deprecated(
-    "Use the other overload of apply() and methods of the returned Builder.",
-    "0.3.1")
-  def apply(id: String,
-            base: File,
-            crossType: CrossType,
-            platforms: Platform*): CrossProject = {
+  @deprecated("Use the other overload of apply() and methods of the returned Builder.", "0.3.1")
+  def apply(id: String, base: File, crossType: CrossType, platforms: Platform*): CrossProject = {
     apply(id, base)(platforms: _*).crossType(crossType)
   }
 }

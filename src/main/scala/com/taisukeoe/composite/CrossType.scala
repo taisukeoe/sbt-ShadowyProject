@@ -12,14 +12,14 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, this
+ * Redistributions of source code must retain the above copyright notice, this
   list of conditions and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright notice,
+ * Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
 
-* Neither the name of sbt-crossproject-project nor the names of its
+ * Neither the name of sbt-crossproject-project nor the names of its
   contributors may be used to endorse or promote products derived from
   this software without specific prior written permission.
 
@@ -42,9 +42,9 @@ import java.io.File
 abstract class CrossType {
 
   /** The base directory for a (true sbt) Project
-   *  @param crossBase The base directory of the CrossProject
-   *  @param projectType "jvm" or "js". Other values may be supported
-   */
+    *  @param crossBase The base directory of the CrossProject
+    *  @param projectType "jvm" or "js". Other values may be supported
+    */
   @deprecated("use platformDir", "0.1.0")
   def projectDir(crossBase: File, projectType: String): File
 
@@ -59,17 +59,17 @@ abstract class CrossType {
   final def jsDir(crossBase: File): File = projectDir(crossBase, "js")
 
   /** The base directory for a (true sbt) Project
-   *  @param crossBase The base directory of the CrossProject
-   *  @param platform JSPlatform, JVMPlatform, NativePlatform, ...
-   */
+    *  @param crossBase The base directory of the CrossProject
+    *  @param platform JSPlatform, JVMPlatform, NativePlatform, ...
+    */
   final def platformDir(crossBase: File, platform: Platform): File =
     projectDir(crossBase, platform)
 
   /** The location of a shared source directory (if it exists)
-   *  @param projectBase the base directory of a (true sbt) Project
-   *  @param conf name of sub-directory for the configuration (typically "main"
-   *      or "test")
-   */
+    *  @param projectBase the base directory of a (true sbt) Project
+    *  @param conf name of sub-directory for the configuration (typically "main"
+    *      or "test")
+    */
   def sharedSrcDir(projectBase: File, conf: String): Option[File]
 
 }
@@ -77,17 +77,16 @@ abstract class CrossType {
 object CrossType {
 
   /** * <pre>
-   * .
-   * ├── js
-   * ├── jvm
-   * ├── native
-   * └── shared
-   * </pre>
-   */
+    * .
+    * ├── js
+    * ├── jvm
+    * ├── native
+    * └── shared
+    * </pre>
+    */
   object Full extends CrossType {
 
-    @deprecated("use projectDir(crossBase: File, platform: Platform): File",
-                "0.1.0")
+    @deprecated("use projectDir(crossBase: File, platform: Platform): File", "0.1.0")
     def projectDir(crossBase: File, projectType: String): File =
       crossBase / projectType
 
@@ -99,17 +98,16 @@ object CrossType {
   }
 
   /**
-   * <pre>
-   * .
-   * ├── .js
-   * ├── .jvm
-   * ├── .native
-   * └── src
-   * </pre>
-   */
+    * <pre>
+    * .
+    * ├── .js
+    * ├── .jvm
+    * ├── .native
+    * └── src
+    * </pre>
+    */
   object Pure extends CrossType {
-    @deprecated("use projectDir(crossBase: File, platform: Platform): File",
-                "0.1.0")
+    @deprecated("use projectDir(crossBase: File, platform: Platform): File", "0.1.0")
     def projectDir(crossBase: File, projectType: String): File =
       crossBase / ("." + projectType)
 
@@ -121,16 +119,15 @@ object CrossType {
   }
 
   /**
-   * <pre>
-   * .
-   * ├── js
-   * ├── jvm
-   * └── native
-   * </pre>
-   */
+    * <pre>
+    * .
+    * ├── js
+    * ├── jvm
+    * └── native
+    * </pre>
+    */
   object Dummy extends CrossType {
-    @deprecated("use projectDir(crossBase: File, platform: Platform): File",
-                "0.1.0")
+    @deprecated("use projectDir(crossBase: File, platform: Platform): File", "0.1.0")
     def projectDir(crossBase: File, projectType: String): File =
       crossBase / projectType
 
