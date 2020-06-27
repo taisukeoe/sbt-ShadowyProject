@@ -37,9 +37,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import scala.language.implicitConversions
 
+import sbt.Keys._
 import sbt._
-import Keys._
 
+// scalafix:off DisableSyntax.implicitConversion
 final class CrossProject private[composite] (
     private val id: String,
     val projects: Map[Platform, Project]
@@ -150,7 +151,7 @@ object CrossProject {
   final class Builder private[CrossProject] (
       id: String,
       base: File,
-      platforms: Seq[Platform],
+      platforms: Seq[Platform]
   ) {
     private[CrossProject] def this(id: String, base: File, platforms: Seq[Platform], internal: Boolean) =
       this(id, base, platforms)

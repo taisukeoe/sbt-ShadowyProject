@@ -36,11 +36,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 import scala.language.experimental.macros
+import scala.language.implicitConversions
 
 import sbt._
 
-import scala.language.implicitConversions
-
+// scalafix:off DisableSyntax.implicitConversion
 object CrossPlugin extends AutoPlugin {
   override def trigger = allRequirements
 
@@ -80,7 +80,7 @@ object CrossPlugin extends AutoPlugin {
         project.configurePlatform(Primary)(transformer)
     }
 
-    lazy val crossProjectPlatform =
+    lazy val crossProjectPlatform: SettingKey[Platform] =
       settingKey[Platform]("platform of the current project")
 
   }
