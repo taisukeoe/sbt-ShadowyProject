@@ -67,7 +67,7 @@ object CrossPlugin extends AutoPlugin {
 
     // The JVM platform
 
-    val JVMPlatform = com.taisukeoe.composite.JVMPlatform
+    val JVMPlatform = com.taisukeoe.composite.Primary
     val Refactoring = com.taisukeoe.composite.Refactoring
 
     implicit def JVMCrossProjectBuilderOps(builder: CrossProject.Builder): JVMCrossProjectOps =

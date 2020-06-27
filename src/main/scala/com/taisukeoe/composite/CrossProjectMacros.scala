@@ -88,7 +88,7 @@ private[composite] object CrossProjectMacros {
 
   def vargCrossProject_impl(c: Context)(platforms: c.Expr[Platform]*): c.Expr[CrossProject.Builder] = {
     import c.universe._
-    val withDefaults: List[c.Expr[Platform]] = reify(JVMPlatform) :: reify(Refactoring) :: platforms.toList
+    val withDefaults: List[c.Expr[Platform]] = reify(Primary) :: reify(Refactoring) :: platforms.toList
     crossProject_impl(c)(withDefaults)
   }
 }

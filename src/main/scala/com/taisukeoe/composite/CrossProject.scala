@@ -42,7 +42,6 @@ import Keys._
 
 final class CrossProject private[composite] (
     private val id: String,
-    crossType: CrossType,
     val projects: Map[Platform, Project]
 ) extends CompositeProject {
 
@@ -92,7 +91,7 @@ final class CrossProject private[composite] (
     val updatedProjects =
       platforms.foldLeft(projects)((acc, platform) => acc.updated(platform, f(acc(platform))))
 
-    new CrossProject(id, crossType, updatedProjects)
+    new CrossProject(id, updatedProjects)
   }
 
   def disablePlugins(ps: AutoPlugin*): CrossProject =
@@ -102,7 +101,7 @@ final class CrossProject private[composite] (
     transform(_.enablePlugins(ns: _*))
 
   def in(dir: File): CrossProject =
-    mapProjectsByPlatform((platform, project) => project.in(crossType.platformDir(dir, platform)))
+    mapProjectsByPlatform((platform, project) => project.in(CrossType.Pure.platformDir(dir, platform)))
 
   def overrideConfigs(cs: Configuration*): CrossProject =
     transform(_.overrideConfigs(cs: _*))
@@ -127,7 +126,7 @@ final class CrossProject private[composite] (
     val updatedProjects = projects.map {
       case (platform, project) => platform -> f(platform, project)
     }
-    new CrossProject(id, crossType, updatedProjects)
+    new CrossProject(id, updatedProjects)
   }
 
   private def transform(f: Project => Project): CrossProject =
@@ -163,7 +162,7 @@ object CrossProject {
       val projects =
         platforms.map { platform =>
           val projectID =
-            if (platform == JVMPlatform) id
+            if (platform == Primary) id
             else id + platform.sbtSuffix
 
           platform -> platform.enable(
@@ -178,7 +177,7 @@ object CrossProject {
           )
         }.toMap
 
-      new CrossProject(id, crossType, projects)
+      new CrossProject(id, projects)
     }
 
     private def sharedSrcSettings(crossType: CrossType): Seq[Setting[_]] = {
