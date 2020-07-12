@@ -8,6 +8,12 @@ lazy val prj = refactoringProject()
     scalaVersion := "2.13.2",
     scalacOptions ++= Seq(unused, deprecation),
     unmanagedSourceDirectories.in(Compile) += baseDirectory.value / "raw",
-  ).primarySettings(
-    scalacOptions.in(Compile, compile) += fatalWarnings
+    scalacOptions += fatalWarnings
   )
+//  .primarySettings(
+//    scalacOptions.in(Compile, compile) += fatalWarnings
+//  )
+
+import SettingTransformer._
+
+lazy val shadow = prj.refactor.modify(RemoveXFatalWarnings)

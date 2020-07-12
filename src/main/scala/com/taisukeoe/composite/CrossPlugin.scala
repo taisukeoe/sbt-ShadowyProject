@@ -49,8 +49,13 @@ object CrossPlugin extends AutoPlugin {
     type CrossType = com.taisukeoe.composite.CrossType
     val CrossType = com.taisukeoe.composite.CrossType
 
-    // The crossProject macro
-
+    // TODO:
+    //  refactoring(modifiers).settings( /* .. */ )
+    //  という感じの構文で、適切な設定のrefactoring sub projectが自動生成されるようにする
+    //
+    // TODO:
+    //  それとは別に、refactoringSettings() や　primarySettings()
+    //  も使えるようにする
     def refactoringProject(platforms: Platform*): CrossProject.Builder =
       macro CrossProjectMacros.vargCrossProject_impl
 
@@ -61,6 +66,15 @@ object CrossPlugin extends AutoPlugin {
 
     final implicit def toCrossClasspathDependency(cp: CrossProject): CrossClasspathDependency =
       new CrossClasspathDependency(cp, None)
+
+    implicit class ShadowLikeProject(prj: Project) {
+      import com.taisukeoe.SettingTransformer
+      def modify(trans: SettingTransformer): Project =
+        Project(prj.id, prj.base).settings((prj.settings: Seq[Setting[_]]).flatMap(trans.transform(_).newSettings))
+          .aggregate((prj.aggregate: Seq[ProjectReference]): _*)
+        .dependsOn(prj.dependencies: _*)
+        .enablePlugins(prj.plugins)
+    }
 
     // The JVM platform
 
@@ -78,6 +92,16 @@ object CrossPlugin extends AutoPlugin {
 
       def primaryConfigure(transformer: Project => Project): CrossProject =
         project.configurePlatform(Primary)(transformer)
+    }
+
+    implicit class RefactorCrossProjectOps(project: CrossProject) {
+      def refactor: Project = project.projects(Refactoring)
+
+      def refactorSettings(ss: Def.SettingsDefinition*): CrossProject =
+        refactorConfigure(_.settings(ss: _*))
+
+      def refactorConfigure(transformer: Project => Project): CrossProject =
+        project.configurePlatform(Refactoring)(transformer)
     }
 
     lazy val crossProjectPlatform: SettingKey[Platform] =
