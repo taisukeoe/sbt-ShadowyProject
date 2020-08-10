@@ -1,4 +1,4 @@
-package com.taisukeoe.composite
+package com.taisukeoe.out_dated
 
 /*
 Copied and pasted from sbt-crossproject.
@@ -41,7 +41,7 @@ import sbt.Keys._
 import sbt._
 
 // scalafix:off DisableSyntax.implicitConversion
-final class CrossProject private[composite] (
+final class CrossProject private[out_dated](
     private val id: String,
     val projects: Map[Platform, Project]
 ) extends CompositeProject {

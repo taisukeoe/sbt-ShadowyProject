@@ -1,4 +1,4 @@
-package com.taisukeoe.composite
+package com.taisukeoe.out_dated
 
 /*
 Copied and pasted from sbt-crossproject.
@@ -37,41 +37,57 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import scala.reflect.macros.Context
 
-private[composite] object MacroUtils {
-
-  // Copied from sbt.std.KeyMacros
-
-  def definingValName(c: Context, invalidEnclosingTree: String => String): String = {
+private[out_dated] object CrossProjectMacros {
+  def crossProject_impl(c: Context)(platformsArgs: List[c.Expr[Platform]]): c.Expr[CrossProject.Builder] = {
     import c.universe._
-    val methodName = c.macroApplication.symbol.name
 
-    // trim is not strictly correct, but macros don't expose the API necessary
-    def processName(n: Name): String = n.decoded.trim
+    val enclosingValName = MacroUtils.definingValName(
+      c,
+      methodName => s"""$methodName must be directly assigned to a val, such as `val x = $methodName`."""
+    )
 
-    def enclosingVal(trees: List[c.Tree]): String =
-      trees match {
-        case vd @ ValDef(_, name, _, _) :: ts =>
-          processName(name)
+    val name = Literal(Constant(enclosingValName))
 
-        case (_: Apply | _: Select | _: TypeApply) :: xs =>
-          enclosingVal(xs)
+    def javaIoFile =
+      reify { new _root_.java.io.File(c.Expr[String](name).splice) }.tree
 
-        // lazy val x: X = <methodName> has this form for some reason
-        // (only when the explicit type is present, though)
-        case Block(_, _) :: DefDef(mods, name, _, _, _, _) :: xs if mods.hasFlag(Flag.LAZY) =>
-          processName(name)
-        case _ =>
-          c.error(c.enclosingPosition, invalidEnclosingTree(methodName.decoded))
-          "<error>"
-      }
+    val platforms = platformsArgs.map(_.tree).toList
 
-    enclosingVal(enclosingTrees(c).toList)
+    val crossProjectCompanionTerm =
+      Select(
+        Select(
+          Select(
+            Select(
+              Ident(newTermName("_root_")),
+              newTermName("com")
+            ),
+            newTermName("taisukeoe")
+          ),
+          newTermName("composite")
+        ),
+        newTermName("CrossProject")
+      )
+
+    val applyFun =
+      Select(
+        crossProjectCompanionTerm,
+        newTermName("apply")
+      )
+
+    c.Expr[CrossProject.Builder](
+      Apply(
+        Apply(
+          applyFun,
+          List(name, javaIoFile)
+        ),
+        platforms
+      )
+    )
   }
 
-  def enclosingTrees(c: Context): Seq[c.Tree] =
-    c.asInstanceOf[reflect.macros.runtime.Context]
-      .callsiteTyper
-      .context
-      .enclosingContextChain
-      .map(_.tree.asInstanceOf[c.Tree])
+  def vargCrossProject_impl(c: Context)(platforms: c.Expr[Platform]*): c.Expr[CrossProject.Builder] = {
+    import c.universe._
+    val withDefaults: List[c.Expr[Platform]] = reify(Primary) :: reify(Refactoring) :: platforms.toList
+    crossProject_impl(c)(withDefaults)
+  }
 }

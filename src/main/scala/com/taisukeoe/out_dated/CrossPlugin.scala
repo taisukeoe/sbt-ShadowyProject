@@ -1,4 +1,4 @@
-package com.taisukeoe.composite
+package com.taisukeoe.out_dated
 
 /*
 Copied and pasted from sbt-crossproject.
@@ -46,8 +46,8 @@ object CrossPlugin extends AutoPlugin {
 
   object autoImport {
 
-    type CrossType = com.taisukeoe.composite.CrossType
-    val CrossType = com.taisukeoe.composite.CrossType
+    type CrossType = com.taisukeoe.out_dated.CrossType
+    val CrossType = com.taisukeoe.out_dated.CrossType
 
     // TODO:
     //  refactoring(modifiers).settings( /* .. */ )
@@ -78,8 +78,8 @@ object CrossPlugin extends AutoPlugin {
 
     // The JVM platform
 
-    val Primary = com.taisukeoe.composite.Primary
-    val Refactoring = com.taisukeoe.composite.Refactoring
+    val Primary = com.taisukeoe.out_dated.Primary
+    val Refactoring = com.taisukeoe.out_dated.Refactoring
 
     implicit def PrimaryCrossProjectBuilderOps(builder: CrossProject.Builder): PrimaryCrossProjectOps =
       new PrimaryCrossProjectOps(builder)

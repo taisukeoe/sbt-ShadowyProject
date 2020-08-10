@@ -1,4 +1,4 @@
-package com.taisukeoe.composite
+package com.taisukeoe.out_dated
 
 import sbt._
 
