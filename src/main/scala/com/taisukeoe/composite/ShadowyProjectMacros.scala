@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import scala.reflect.macros.blackbox
 
 private[composite] object ShadowyProjectMacros {
-  def shadowyProject_impl(c: blackbox.Context)(settingsArgs: List[c.Expr[ShadowySettings]]): c.Expr[ShadowyProject.Builder] = {
+  def shadowyProject_impl(c: blackbox.Context)(shadowy: c.Expr[ShadowyContext]): c.Expr[ShadowyProject.Builder] = {
     import c.universe._
 
     val enclosingValName = MacroUtils.definingValName(
@@ -51,7 +51,7 @@ private[composite] object ShadowyProjectMacros {
     def javaIoFile =
       reify { new _root_.java.io.File(c.Expr[String](name).splice) }.tree
 
-    val shadowySettings = settingsArgs.map(_.tree)
+    val shadowySettings = shadowy.tree
 
     val shadowyProjectCompanionTerm =
       Select(
@@ -80,7 +80,7 @@ private[composite] object ShadowyProjectMacros {
           applyFun,
           List(name, javaIoFile)
         ),
-        shadowySettings
+        List(shadowySettings)
       )
     )
   }

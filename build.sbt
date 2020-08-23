@@ -12,10 +12,22 @@ import SettingTransformer._
 def ifScala212[T](binVersion: String)(ifTrue: T)(ifFalse: T): T =
   if (binVersion == "2.12") ifTrue else ifFalse
 
-lazy val sbtShadowyProject = (project in file("."))
+/*
+ * Since Scalafix won't work well with `-Xfatal-warnings` or Scala 2.10,
+ * this shadow project is nicer to run scalafix.
+ */
+val context = new ShadowyContext(
+  RemoveXFatalWarnings +
+    ExcludeKeyNames(
+      Set(crossScalaVersions.key.label)
+    ),
+  ForPrimary.disablePlugins(ScalafixPlugin),
+  ForSecondary.settings(ScalafixSettings.permanent)
+)
+
+lazy val root = (shadowyProject(context) in file("."))
   .enablePlugins(SbtPlugin)
   .enablePlugins(GitVersioning)
-  .disablePlugins(ScalafixPlugin)
   .settings(
     name := "sbt-shadowyproject",
     scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked"),
@@ -63,17 +75,3 @@ lazy val sbtShadowyProject = (project in file("."))
     scriptedBufferLog := false
   )
   .settings(Seq(Compile, Test).map(_ / console / scalacOptions -= "-Xlint"))
-
-lazy val shadow = project
-  .shadow(sbtShadowyProject) //dog-fooding!
-  /*
-   * Since Scalafix won't work well with `-Xfatal-warnings` or Scala 2.10,
-   * this shadow project is nicer to run scalafix.
-   */
-  .modify(
-    RemoveXFatalWarnings + ExcludeKeyNames(
-      Set(crossScalaVersions.key.label)
-    )
-  )
-  .settings(ScalafixSettings.permanent: _*)
-  .light

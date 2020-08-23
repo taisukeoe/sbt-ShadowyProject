@@ -70,10 +70,11 @@ object CrossPlugin extends AutoPlugin {
     implicit class ShadowLikeProject(prj: Project) {
       import com.taisukeoe.SettingTransformer
       def modify(trans: SettingTransformer): Project =
-        Project(prj.id, prj.base).settings((prj.settings: Seq[Setting[_]]).flatMap(trans.transform(_).newSettings))
+        Project(prj.id, prj.base)
+          .settings((prj.settings: Seq[Setting[_]]).flatMap(trans.transform(_).newSettings))
           .aggregate((prj.aggregate: Seq[ProjectReference]): _*)
-        .dependsOn(prj.dependencies: _*)
-        .enablePlugins(prj.plugins)
+          .dependsOn(prj.dependencies: _*)
+          .enablePlugins(prj.plugins)
     }
 
     // The JVM platform

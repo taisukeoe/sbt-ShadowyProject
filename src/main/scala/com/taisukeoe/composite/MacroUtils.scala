@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import scala.reflect.macros._
 
-private[out_dated] object MacroUtils {
+private[composite] object MacroUtils {
 
   // Copied from sbt.std.KeyMacros
 
