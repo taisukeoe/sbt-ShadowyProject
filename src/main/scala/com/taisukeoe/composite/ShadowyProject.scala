@@ -11,6 +11,40 @@ final class ShadowyProject(id: String, val projects: Map[ShadowyProject.Type, Pr
     extends CompositeProject {
   override def componentProjects: Seq[Project] = projects.values.toSeq
 
+  def dependsOn(deps: ShadowyClasspathDependency*): ShadowyProject = {
+    val dependenciesByType =
+      deps.toSeq
+        .flatMap { dep =>
+          dep.project match {
+            case Right(shadowyDep) =>
+              shadowyDep.projects.map { case (typ, prj) => typ -> ClasspathDependency(prj, dep.configuration) }
+            case Left(projectDep) =>
+              ShadowyProject.Type.all.map(_ -> ClasspathDependency(projectDep, dep.configuration))
+          }
+        }
+        .groupBy(_._1)
+        .mapValues(_.map(_._2))
+
+    mapProjectsByType((typ, project) => project.dependsOn(dependenciesByType(typ): _*))
+  }
+
+  def aggregates(deps: ShadowyAggregationReference*): ShadowyProject = {
+    val aggregationByType =
+      deps.toSeq
+        .flatMap { dep =>
+          dep.project match {
+            case Right(shadowyDep) =>
+              shadowyDep.projects
+            case Left(projectDep) =>
+              ShadowyProject.Type.all.map(_ -> projectDep)
+          }
+        }
+        .groupBy(_._1)
+        .mapValues(_.map(v => Project.projectToLocalProject(v._2)))
+
+    mapProjectsByType((typ, project) => project.aggregate(aggregationByType(typ): _*))
+  }
+
   def configure(transforms: (Project => Project)*): ShadowyProject =
     transform(_.configure(transforms: _*))
 
@@ -91,6 +125,10 @@ object ShadowyProject {
   sealed abstract class Type
   case object Primary extends Type
   case object Secondary extends Type
+
+  object Type {
+    val all: Seq[Type] = Seq(Primary, Secondary)
+  }
 
   def apply(id: String, base: File)(shadowy: ShadowyContext): Builder =
     new Builder(id, base, shadowy)

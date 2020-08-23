@@ -75,3 +75,5 @@ lazy val root = (shadowyProject(context) in file("."))
     scriptedBufferLog := false
   )
   .settings(Seq(Compile, Test).map(_ / console / scalacOptions -= "-Xlint"))
+
+val a = implicitly[Project => ProjectReference]

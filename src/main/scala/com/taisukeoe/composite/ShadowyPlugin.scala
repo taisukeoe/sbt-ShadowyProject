@@ -1,6 +1,7 @@
 package com.taisukeoe.composite
 
 import scala.language.experimental.macros
+import scala.language.implicitConversions
 
 import sbt._
 
@@ -20,6 +21,29 @@ object ShadowyPlugin extends AutoPlugin {
       def primary: Project = shadowyProj.projects(ShadowyProject.Primary)
       def secondary: Project = shadowyProj.projects(ShadowyProject.Secondary)
     }
+    // scalafix:off DisableSyntax.implicitConversion
+    final implicit def toShadowyClasspathDependencyConstructor(
+        sp: ShadowyProject
+    ): ShadowyClasspathDependency.Constructor =
+      new ShadowyClasspathDependency.Constructor(Right(sp))
+
+    final implicit def toShadowyClasspathDependency(sp: ShadowyProject): ShadowyClasspathDependency =
+      new ShadowyClasspathDependency(Right(sp), None)
+
+    final implicit def prjToShadowyClasspathDependencyConstructor(
+        prj: Project
+    ): ShadowyClasspathDependency.Constructor =
+      new ShadowyClasspathDependency.Constructor(Left(prj))
+
+    final implicit def prjToShadowyClasspathDependency(prj: Project): ShadowyClasspathDependency =
+      new ShadowyClasspathDependency(Left(prj), None)
+
+    final implicit def ToShadowyAggregationReference(sp: ShadowyProject): ShadowyAggregationReference =
+      new ShadowyAggregationReference(Right(sp))
+
+    final implicit def prjToShadowyAggregationReference(prj: Project): ShadowyAggregationReference =
+      new ShadowyAggregationReference(Left(prj))
+    // scalafix:on DisableSyntax.implicitConversion
 
     sealed class ForType(targetType: ShadowyProject.Type) {
       def disablePlugins(plugins: AutoPlugin*): ProjectTransformer =
