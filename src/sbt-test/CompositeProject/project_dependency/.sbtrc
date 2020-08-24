@@ -1,0 +1,1 @@
+alias setFatalUnused=;set scalacOptions in ThisBuild += "-Werror"
