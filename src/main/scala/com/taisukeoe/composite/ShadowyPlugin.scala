@@ -2,10 +2,9 @@ package com.taisukeoe.composite
 
 import scala.language.experimental.macros
 import scala.language.implicitConversions
-
 import sbt._
-
 import com.taisukeoe.composite.ShadowyProject.Type
+import sbt.Keys._
 
 object ShadowyPlugin extends AutoPlugin {
   override def trigger = allRequirements
@@ -45,25 +44,70 @@ object ShadowyPlugin extends AutoPlugin {
       new ShadowyAggregationReference(Left(prj))
     // scalafix:on DisableSyntax.implicitConversion
 
-    sealed class ForType(targetType: ShadowyProject.Type) {
+    sealed class ForType(targetTypes: Set[ShadowyProject.Type]) {
       def disablePlugins(plugins: AutoPlugin*): ProjectTransformer =
         new ProjectTransformer {
-          override def target: Type = targetType
+          override def target(typ: Type): Boolean = targetTypes(typ)
           override def transform(project: Project): Project = project.disablePlugins(plugins: _*)
         }
       def settings(setting: Def.SettingsDefinition): ProjectTransformer =
         new ProjectTransformer {
-          override def target: Type = targetType
+          override def target(typ: Type): Boolean = targetTypes(typ)
           override def transform(project: Project): Project = project.settings(setting)
         }
       def settings(setting: Seq[Def.Setting[_]]): ProjectTransformer =
         new ProjectTransformer {
-          override def target: Type = targetType
+          override def target(typ: Type): Boolean = targetTypes(typ)
           override def transform(project: Project): Project = project.settings(setting)
         }
-    }
-    object ForPrimary extends ForType(ShadowyProject.Primary)
 
-    object ForSecondary extends ForType(ShadowyProject.Secondary)
+      def autoAggregate[T](task: TaskKey[T]): ProjectTransformer =
+        new ProjectTransformer {
+          override def target(typ: Type): Boolean = targetTypes(typ)
+          override def transform(project: Project): Project = {
+            val doAllTasks = Def.taskDyn {
+              val dependencies = buildDependencies.value.classpathTransitive(thisProjectRef.in(project).value)
+              dependencies.map(_ / task).join
+            }
+            project.settings {
+              task := {
+                doAllTasks.value
+                task.value
+              }
+            }
+          }
+        }
+
+//      def autoAggregate[T](input: InputKey[T]): ProjectTransformer =
+//        new ProjectTransformer {
+//          override def target: Type = targetType
+//
+//          override def transform(project: Project): Project = {
+//            def doAllTasks(arg: String) = Def.taskDyn{
+//              val dependencies = buildDependencies.value.classpathTransitive(thisProjectRef.in(project).value)
+//              val tasks = dependencies.map(_ / input).join
+//
+//              tasks.map(_.map(_.parsed).join)
+//            }
+//
+//            project.settings {
+//              input := Def.inputTaskDyn{
+//                val argSeq = complete.DefaultParsers.spaceDelimited("<args>").parsed
+//                val arg = argSeq.mkString(" ", " ", "")
+//                println(s"parsed arg:$arg")
+//                Def.taskDyn{
+//                  doAllTasks(arg).value
+//                  input.toTask(arg)
+//                }
+//              }.evaluated
+//            }
+//          }
+//        }
+    }
+    object ForPrimary extends ForType(Set(ShadowyProject.Primary))
+
+    object ForSecondary extends ForType(Set(ShadowyProject.Secondary))
+
+    object ForAll extends ForType(Set(ShadowyProject.Primary, ShadowyProject.Secondary))
   }
 }

@@ -22,10 +22,10 @@ class ShadowyContext(transformer: SettingTransformer, projectTransformer: Projec
       case Secondary => settings.flatMap(transformer.transform(_).newSettings)
     }
   def configurationsFor(typ: Type, project: Project): Project =
-    projectTransformer.foldLeft(project)((prj, trans) => if (trans.target == typ) trans.transform(prj) else prj)
+    projectTransformer.foldLeft(project)((prj, trans) => if (trans.target(typ)) trans.transform(prj) else prj)
 }
 
 trait ProjectTransformer {
-  def target: ShadowyProject.Type
+  def target(typ: ShadowyProject.Type): Boolean
   def transform(project: Project): Project
 }

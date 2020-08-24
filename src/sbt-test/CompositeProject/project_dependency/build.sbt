@@ -12,8 +12,13 @@ import SettingTransformer._
 version.in(ThisBuild) := "0.1"
 scalaVersion.in(ThisBuild) := "2.13.2"
 
-val common = scalacOptions += "-Wunused"
-val context = new ShadowyContext(Empty, ForSecondary.settings(common))
+val myRun = TaskKey[Unit]("myRun")
+
+val context = new ShadowyContext(Empty,
+  ForAll.settings(myRun := (Compile / run).toTask(" a1 a2 a3 a4").value),
+  ForSecondary.settings(scalacOptions += "-Wunused"),
+  ForAll.autoAggregate(myRun)
+)
 
 lazy val a1 = shadowyProject(context).settings(libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.10")
 lazy val a2 = shadowyProject(context).dependsOn(a1 % "compile->compile;test->test")

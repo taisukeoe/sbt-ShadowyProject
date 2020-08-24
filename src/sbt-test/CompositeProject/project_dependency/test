@@ -6,6 +6,7 @@
 +>a3/test:compile
 +>a4/compile
 ->a4/test:compile
++>a4/myRun
 +>a1Shadow/compile
 +>a1Shadow/test:compile
 +>a2Shadow/compile
@@ -14,6 +15,7 @@
 +>a3Shadow/test:compile
 +>a4Shadow/compile
 ->a4Shadow/test:compile
++>a4Shadow/myRun
 
 # recursive dependency
 >setFatalUnused
@@ -24,6 +26,7 @@
 +>a3/compile
 +>a3/test:compile
 +>a4/compile
++>a4/myRun
 ->a4/test:compile
 ->a1Shadow/compile
 ->a1Shadow/test:compile
@@ -33,3 +36,4 @@
 ->a3Shadow/test:compile
 ->a4Shadow/compile
 ->a4Shadow/test:compile
+->a4Shadow/myRun
